@@ -419,7 +419,10 @@ COPY --chmod=0755 docker/entrypoint-dispatch.sh /opt/hermes/docker/entrypoint-di
 # every other consumer.
 ENV PATH="/opt/hermes/bin:/opt/hermes/.venv/bin:/opt/data/.local/bin:${PATH}"
 RUN mkdir -p /opt/data
-VOLUME [ "/opt/data" ]
+# NOTE (FinVerified fork): the upstream `VOLUME [ "/opt/data" ]` declaration
+# was removed here because Railway does not support Docker VOLUME
+# instructions. Persistence for /opt/data is provided by a Railway Volume
+# attached to the service instead. Keep this removal when merging upstream.
 
 # The image ENTRYPOINT is a tiny dispatcher rather than `/init` directly.
 # When the image really owns PID 1 (normal Docker / Podman), the dispatcher
