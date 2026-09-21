@@ -1,0 +1,71 @@
+# Hermes config for hermes-seraphine (v1 — partnership coordinator)
+# Lives at $HERMES_HOME/config.yaml on the Railway volume.
+#
+# Everything about what Seraphine CAN do is decided here and by the
+# credentials in her Railway environment. AGENTS.md states the intent;
+# this file and the env enforce it.
+
+model:
+  # All inference goes through LiteLLM. No direct provider key exists in
+  # Seraphine's environment. The virtual key carries the budget cap and the
+  # allowed-model list, so the cap is enforced upstream of the agent.
+  provider: "custom"
+  base_url: "https://litellm-gateway-production-774e.up.railway.app/v1"
+  # api_key comes from OPENAI_API_KEY in the Railway environment — a LiteLLM
+  # virtual key, never a raw provider key.
+
+  # Cheap by default. "seraphine-fast" and "seraphine-strong" are model
+  # ALIASES defined inside LiteLLM, so the real model behind each can be
+  # swapped in the LiteLLM UI without touching this service. AGENTS.md says
+  # when to escalate to strong.
+  default: "seraphine-fast"
+
+  # Keep responses bounded. Slack is the surface; nobody wants 8k tokens.
+  max_tokens: 2048
+
+# ── Platform toolsets: THE capability allowlist ────────────────────────────
+# Hermes's default `hermes-slack` toolset is FULL access (terminal, browser,
+# file write, image/video generation). We replace it with a composed list.
+# Not present here = not available to Seraphine on Slack.
+platform_toolsets:
+  slack:
+    - web            # web_search, web_extract — read vendor pages
+    - file           # read_file, write_file, patch, search_files — her trackers only, on her volume
+    - memory         # durable notes
+    - todo           # working list per task
+    - cronjob        # the daily staleness check
+    - clarify        # ask before acting when unsure
+    - session_search # find her own prior work
+    - skills         # read-only skill library
+
+  # No other platform is enabled. Telegram is intentionally absent in v1.
+
+# ── Explicit denials (belt and braces — these are not in the list above,
+#    but stating them makes the intent unmissable in review) ───────────────
+# NOT enabled: terminal, process, code_execution, browser, delegation,
+#              image_gen, video_gen, bfl, tts, computer_use, project, kanban
+
+# ── Guardrails ─────────────────────────────────────────────────────────────
+tool_loop_guardrails:
+  enabled: true
+  max_consecutive_identical_calls: 3   # AGENTS.md: retry at most twice, then stop
+
+# ── Memory ─────────────────────────────────────────────────────────────────
+memory:
+  enabled: true
+  # MEMORY.md and the pipeline/ directory persist on the Railway volume.
+
+# ── Sessions ───────────────────────────────────────────────────────────────
+max_concurrent_sessions: 3
+group_sessions_per_user: true
+
+# ── No MCP servers in v1 ───────────────────────────────────────────────────
+# Linear's official MCP is OAuth-only and needs a browser on first connect,
+# which a headless Railway service cannot do. Linear is a v2 item.
+# mcp_servers: {}
+
+# ── Telemetry off ──────────────────────────────────────────────────────────
+telemetry:
+  enabled: false
+updates:
+  check: false
