@@ -303,7 +303,7 @@ def test_register_adds_nine_tools_in_sol_toolset(monkeypatch):
     p.register(ctx)
     assert len(reg) == 9 and {r["toolset"] for r in reg} == {"sol_finance"}
     assert all(r["schema"]["name"] == r["name"] and callable(r["handler"]) for r in reg)
-    assert hooks == ["pre_tool_call"]
+    assert hooks == ["pre_tool_call", "post_api_request"]
 
 
 def test_startup_hook_is_shipped_and_wired():
@@ -313,3 +313,34 @@ def test_startup_hook_is_shipped_and_wired():
     assert meta["events"] == ["gateway:startup"]
     assert "async def handle(event_type, context)" in (d / "handler.py").read_text()
     assert "scripts hooks" in (ROOT / "docker/stage2-hook.sh").read_text()
+
+
+def test_budget_falls_back_to_local_estimate_when_key_cannot_read_spend(monkeypatch):
+    from plugins.sol_finance import usage_ledger
+    usage_ledger.record("openrouter/anthropic/claude-sonnet-4.5", {"input_tokens": 1_000_000, "output_tokens": 1_000_000})
+    assert round(usage_ledger.estimate_month()[0], 2) == 18.0  # $3 + $15
+    usage_ledger.record("openrouter/anthropic/claude-haiku-4.5", {"input_tokens": 1_000_000, "output_tokens": 0, "cache_read_tokens": 1_000_000})
+    assert round(usage_ledger.estimate_month()[0], 2) == 19.1  # + $1 + $0.10
+
+    def deny(method, url, **kw):
+        if "/key/info" in url:
+            raise common.HttpError(403, "Virtual key is not allowed to call this route")
+        raise AssertionError(url)
+
+    monkeypatch.setattr(common, "http_json", deny)
+    st = budget.status()
+    assert st["source"] == "estimate" and st["spent_usd"] == 19.1
+    assert "estimated" in budget.message("warn", st, budget.DEFAULTS, "x")
+
+
+def test_post_api_request_hook_records_usage():
+    import plugins.sol_finance as p
+    from plugins.sol_finance import usage_ledger
+    p._post_api_request(model="openrouter/anthropic/claude-haiku-4.5", usage={"input_tokens": 2_000_000, "output_tokens": 0})
+    assert usage_ledger.estimate_month()[0] == 2.0
+    p._post_api_request(model="x", usage=None)  # no usage: ignored
+
+
+def test_first_run_skill_exists():
+    t = (ROOT / "deploy/sol/skills/first-run/SKILL.md").read_text()
+    assert t.startswith("---\nname: sol-first-run") and "Founder-Paid Expense Schedule 2026" in t

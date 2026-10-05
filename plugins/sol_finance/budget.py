@@ -12,7 +12,7 @@ import os
 import time
 from typing import Any, Dict, List, Optional
 
-from . import common, slack_dm
+from . import common, slack_dm, usage_ledger
 
 ALLOWED_PATHS = ("/key/info", "/spend/logs")
 DEFAULTS = {"monthly_plan_usd": 20, "warn_at": 15, "notify_at": 20, "safety_ceiling": 100,
@@ -50,13 +50,20 @@ def _breakdown() -> List[Dict[str, Any]]:
 
 
 def status() -> Dict[str, Any]:
-    info = (_get("/key/info") or {}).get("info", {})
     c = _cfg()
-    spend = float(info.get("spend") or 0)
-    ceiling = float(info.get("max_budget") or c["safety_ceiling"])
+    source = "litellm"
+    try:
+        info = (_get("/key/info") or {}).get("info", {})
+        spend = float(info.get("spend") or 0)
+        ceiling = float(info.get("max_budget") or c["safety_ceiling"])
+        breakdown = _breakdown()
+    except (common.HttpError, PermissionError):
+        # Sol's virtual key may not be allowed to read /key/info. Fall back to the local estimate.
+        spend, breakdown = usage_ledger.estimate_month()
+        ceiling, source = float(c["safety_ceiling"]), "estimate"
     return {"spent_usd": round(spend, 4), "plan_usd": c["monthly_plan_usd"], "safety_ceiling_usd": ceiling,
-            "pct_of_ceiling": round(100 * spend / ceiling, 1) if ceiling else None,
-            "breakdown": _breakdown(), "raise_link": c["litellm_ui_url"]}
+            "pct_of_ceiling": round(100 * spend / ceiling, 1) if ceiling else None, "source": source,
+            "breakdown": breakdown, "raise_link": c["litellm_ui_url"]}
 
 
 def _month() -> str:
@@ -79,11 +86,12 @@ def message(kind: str, st: Dict[str, Any], c: Dict[str, Any], todo: str) -> str:
     uses = ", ".join(f"{b['model']} ${b['usd']:.2f}" for b in st["breakdown"][:4]) or "see LiteLLM for the per-model split"
     if kind == "ceiling":
         return (f"I'm near my safety limit. Reply RAISE 50 to add $50 or RAISE 100 to add $100.\n"
-                f"Spent ${st['spent_usd']:.2f} of ${st['safety_ceiling_usd']:.0f}. Spend so far: {uses}.\n"
+                f"Spent ${st['spent_usd']:.2f}{' (estimated)' if st.get('source') == 'estimate' else ''} of ${st['safety_ceiling_usd']:.0f}. Spend so far: {uses}.\n"
                 f"I can't change my own budget. To raise it yourself in LiteLLM: {c['litellm_ui_url']}")
     plan = c["monthly_plan_usd"]
     label = f"75% of my ${plan} monthly plan" if kind == "warn" else f"100% of my ${plan} monthly plan. I'm still working"
-    return (f"AI spend check: ${st['spent_usd']:.2f} spent, which is {label}.\n"
+    est = " (estimated from my own usage log; LiteLLM won't let my key read its spend)" if st.get("source") == "estimate" else ""
+    return (f"AI spend check: ${st['spent_usd']:.2f} spent{est}, which is {label}.\n"
             f"Spent on: {uses}.\nLeft to do: {todo}")
 
 

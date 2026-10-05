@@ -4,4 +4,4 @@ description: "Sol (FinVerified CFO agent): read-only finance tools with enforcem
 author: "FinVerified"
 hooks:
   - pre_tool_call
-  - post_tool_call
+  - post_api_request

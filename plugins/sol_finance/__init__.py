@@ -23,6 +23,15 @@ def _pre_tool_call(tool_name: str = "", args: Dict[str, Any] = None, **_kw):
     return None
 
 
+def _post_api_request(model: str = "", usage: Dict[str, Any] = None, **_kw):
+    try:
+        from . import usage_ledger
+
+        usage_ledger.record(model, usage)
+    except Exception:
+        logger.debug("usage ledger write failed", exc_info=True)
+
+
 def register(ctx) -> None:
     from . import schedules, server, tools
 
@@ -30,6 +39,7 @@ def register(ctx) -> None:
     for name, emoji, handler, schema in tools.TOOLS:
         ctx.register_tool(name=name, toolset="sol_finance", schema=schema, handler=handler, emoji=emoji)
     ctx.register_hook("pre_tool_call", _pre_tool_call)
+    ctx.register_hook("post_api_request", _post_api_request)
     if os.environ.get("HERMES_AGENT_DEPLOY") == "sol":
         server.start()
         try:
