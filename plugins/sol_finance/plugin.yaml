@@ -1,0 +1,7 @@
+name: sol_finance
+version: 1.0.0
+description: "Sol (FinVerified CFO agent): read-only finance tools with enforcement in code — approvals, DRAFT-only Xero, no-delete Drive, PII scrubber, fraud guard, LiteLLM budget alerts."
+author: "FinVerified"
+hooks:
+  - pre_tool_call
+  - post_tool_call

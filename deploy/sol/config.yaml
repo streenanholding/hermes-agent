@@ -1,0 +1,88 @@
+# Hermes config for hermes-sol (Sol Rosenthal — CFO / controller / tax lead). FIN-954.
+# Lives at $HERMES_HOME/config.yaml on the Railway volume (seeded from deploy/sol
+# by docker/stage2-hook.sh when HERMES_AGENT_DEPLOY=sol). Reviewed like code.
+#
+# Enforcement lives in plugins/sol_finance (code) and in the scoped credentials
+# in Railway. SOUL.md and AGENTS.md state intent; if they disagree with this file
+# or the credentials, the credentials win.
+
+timezone: America/New_York
+
+model:
+  # All inference goes through LiteLLM with Sol's own virtual key ("sol-cfo").
+  # The key allows exactly two models; budget is enforced upstream.
+  provider: "custom"
+  base_url: "https://litellm-gateway-production-774e.up.railway.app/v1"
+  # api_key comes from OPENAI_API_KEY in Railway (LiteLLM virtual key).
+  default: "openrouter/anthropic/claude-haiku-4.5"   # filing, categorizing, inbox parsing
+  max_tokens: 4096
+
+# Sol-specific settings read by plugins/sol_finance.
+sol:
+  agent: sol-rosenthal
+  models:
+    default: "openrouter/anthropic/claude-haiku-4.5"
+    report: "openrouter/anthropic/claude-sonnet-4.5"   # weekly report, close package, tax memos
+  budget:
+    # Spend is read from LiteLLM (/key/info) with Sol's own key. No hard stop at plan.
+    monthly_plan_usd: 20        # plan: informational
+    warn_at: 15                 # 75%  -> DM Rick
+    notify_at: 20               # 100% -> DM Rick, keep working
+    safety_ceiling: 100         # LiteLLM max_budget. Only Rick raises it, in LiteLLM.
+    ceiling_alert_percent: 90   # $90 -> DM "near my safety limit, reply RAISE 50 / RAISE 100"
+    hard_stop_at_plan: false
+    check_every_hours: 24        # at least daily
+    litellm_ui_url: "https://litellm-gateway-production-774e.up.railway.app/ui"
+  approvers:
+    rick_env: SOL_RICK_SLACK_ID       # Slack user ID; approvals/RAISE count only from this ID
+    nancy_env: SOL_NANCY_SLACK_ID     # countersign / equity items only
+  permissions:
+    mercury: read
+    xero: read                        # DRAFT-only writes unlock in Phase 2; tool rejects non-DRAFT
+    stripe: read
+    aws_billing: read                 # max 1 Cost Explorer pull per weekly run (cached)
+    drive_finance: read_write_no_delete
+    drive_treasury: read
+    gmail: "sol@finverified.ai readonly"
+  xero:
+    scopes: "offline_access accounting.transactions.read accounting.contacts.read accounting.settings.read accounting.reports.read"
+    redirect_path: /xero-callback
+  schedule:
+    weekly_report: "0 7 * * 1"        # Monday 7:00 America/New_York
+    month_end_close: "0 7 5 * *"      # 5th of each month
+    daily_budget_check: "30 6 * * *"  # scripted, no model call
+    heartbeat: none                   # no hourly polling
+  wake_on:
+    slack_dm_from: [rick, nancy]
+    new_mail: sol@finverified.ai
+
+plugins:
+  enabled:
+    - sol_finance
+
+# Capability allowlist. No terminal, browser, code execution, delegation, or media.
+platform_toolsets:
+  slack:
+    - sol_finance    # Mercury/Stripe/Xero/AWS/Drive/Gmail/Slack tools with guards in code
+    - file
+    - memory
+    - todo
+    - cronjob
+    - clarify
+    - session_search
+    - skills
+
+tool_loop_guardrails:
+  enabled: true
+  max_consecutive_identical_calls: 3
+
+memory:
+  enabled: true
+
+max_concurrent_sessions: 3
+group_sessions_per_user: true
+
+telemetry:
+  enabled: false
+updates:
+  check: false

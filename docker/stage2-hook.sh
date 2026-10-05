@@ -431,6 +431,33 @@ seed_one ".env" ".env.example"
 seed_one "config.yaml" "cli-config.yaml.example"
 seed_one "SOUL.md" "docker/SOUL.md"
 
+# --- Agent deploy overlay (HERMES_AGENT_DEPLOY=<name>, e.g. "sol") ---
+# deploy/<name>/ is reviewed in PRs, so its config, soul, contract, skills,
+# templates and scripts are refreshed from the image on every boot. Runtime
+# state (memory, sessions, sol/ ledgers) is never touched.
+if [ -n "${HERMES_AGENT_DEPLOY:-}" ]; then
+    case "$HERMES_AGENT_DEPLOY" in
+        *[!a-z0-9_-]*) echo "[stage2] Warning: invalid HERMES_AGENT_DEPLOY; skipping overlay" ;;
+        *)
+            ov="$INSTALL_DIR/deploy/$HERMES_AGENT_DEPLOY"
+            if [ -d "$ov" ]; then
+                for f in config.yaml SOUL.md AGENTS.md; do
+                    if [ -f "$ov/$f" ] && ! refuse_symlinked_path "overlay" "$HERMES_HOME/$f"; then
+                        as_hermes cp "$ov/$f" "$HERMES_HOME/$f"
+                    fi
+                done
+                for d in skills templates scripts; do
+                    if [ -d "$ov/$d" ] && ! refuse_symlinked_path "overlay" "$HERMES_HOME/$d"; then
+                        as_hermes mkdir -p "$HERMES_HOME/$d"
+                        as_hermes cp -R "$ov/$d/." "$HERMES_HOME/$d/"
+                    fi
+                done
+                echo "[stage2] Applied deploy overlay: $HERMES_AGENT_DEPLOY"
+            fi
+            ;;
+    esac
+fi
+
 # --- Ensure a gateway api_server key exists (loopback control plane) ---
 # The gateway's aiohttp api_server refuses to start without a strong
 # API_SERVER_KEY (>=16 chars; startup guard in gateway/platforms/api_server.py).
