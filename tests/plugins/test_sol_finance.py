@@ -280,6 +280,7 @@ def test_sol_config_matches_ruling():
     b = cfg["sol"]["budget"]
     assert (b["warn_at"], b["notify_at"], b["safety_ceiling"]) == (15, 20, 100) and b["hard_stop_at_plan"] is False
     assert cfg["sol"]["schedule"]["heartbeat"] == "none"
+    assert cfg["_config_version"] >= 12  # else Hermes warns "predates version 12"
     assert cfg["plugins"]["enabled"] == ["sol_finance"]
     assert not {"terminal", "browser", "code_execution"} & set(cfg["platform_toolsets"]["slack"])
 

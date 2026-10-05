@@ -6,6 +6,8 @@
 # in Railway. SOUL.md and AGENTS.md state intent; if they disagree with this file
 # or the credentials, the credentials win.
 
+_config_version: 37   # schema version this file is written for (skips legacy migration)
+
 timezone: America/New_York
 
 model:
