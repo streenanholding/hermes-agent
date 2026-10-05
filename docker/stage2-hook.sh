@@ -446,7 +446,7 @@ if [ -n "${HERMES_AGENT_DEPLOY:-}" ]; then
                         as_hermes cp "$ov/$f" "$HERMES_HOME/$f"
                     fi
                 done
-                for d in skills templates scripts; do
+                for d in skills templates scripts hooks; do
                     if [ -d "$ov/$d" ] && ! refuse_symlinked_path "overlay" "$HERMES_HOME/$d"; then
                         as_hermes mkdir -p "$HERMES_HOME/$d"
                         as_hermes cp -R "$ov/$d/." "$HERMES_HOME/$d/"
