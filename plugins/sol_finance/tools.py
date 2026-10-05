@@ -58,6 +58,8 @@ def h_xero(args, **_):
     a = args.get("action")
     if a == "connect_link":
         return _run(lambda: {"url": xero.authorize_url(), "redirect_uri": xero.redirect_uri()})
+    if a == "org":
+        return _run(lambda: {"organisation": xero.org_name()})
     if a == "read":
         return _run(lambda: {"data": xero.read(args["endpoint"])})
     if a == "post_draft":
@@ -143,7 +145,7 @@ TOOLS = [
         {"summary": "balance, MRR estimate, payouts", "balance": "raw balance", "charges": "charges", "payouts": "payouts",
          "subscriptions": "subscriptions", "balance_transactions": "balance transactions incl. fees"}, {"limit": {"type": "integer"}})),
     ("sol_xero", "📒", h_xero, _schema("sol_xero", "Xero. Read-only now; writes accept Status DRAFT only and are disabled until Phase 2.",
-        {"connect_link": "Xero consent URL + redirect URI for Rick", "read": "GET an accounting endpoint", "post_draft": "Phase 2: create a DRAFT"},
+        {"connect_link": "Xero consent URL + redirect URI for Rick", "org": "connected organisation name only", "read": "GET an accounting endpoint", "post_draft": "Phase 2: create a DRAFT"},
         {"endpoint": _s("e.g. Accounts, Invoices?page=1, Reports/ProfitAndLoss"), "payload": {"type": "object"}})),
     ("sol_aws", "☁️", h_aws, _schema("sol_aws", "AWS Cost Explorer/Budgets, read only. One live pull per week, cached.",
         {"cost_by_month": "cost by month and service since start (default Jan 1)", "budgets": "AWS Budgets"}, {"start": _s("YYYY-MM-DD")})),

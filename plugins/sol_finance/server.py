@@ -28,6 +28,13 @@ class _H(BaseHTTPRequestHandler):
         try:
             if u.path in ("/", "/healthz"):
                 return self._send(200, "ok")
+            if u.path == "/xero-connect":
+                from . import xero
+                self.send_response(302)
+                self.send_header("Location", xero.authorize_url())  # fresh state every time
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                return
             if u.path == "/xero-callback":
                 from . import xero
                 ok = xero.handle_callback(q.get("code", ""), q.get("state", ""))

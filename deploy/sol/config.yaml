@@ -45,7 +45,7 @@ sol:
     drive_treasury: read
     gmail: "sol@finverified.ai readonly"
   xero:
-    scopes: "offline_access accounting.transactions.read accounting.contacts.read accounting.settings.read accounting.reports.read"
+    scopes: see plugins/sol_finance/xero.py READ_SCOPES (granular .read scopes only)
     redirect_path: /xero-callback
   schedule:
     weekly_report: "0 7 * * 1"        # Monday 7:00 America/New_York

@@ -124,7 +124,9 @@ def test_xero_scopes_are_read_only_and_redirect(monkeypatch):
     monkeypatch.setenv("SOL_PUBLIC_URL", "https://sol.example.app/")
     monkeypatch.setenv("XERO_CLIENT_ID", "cid")
     assert xero.redirect_uri() == "https://sol.example.app/xero-callback"
-    assert all(s.endswith(".read") or s == "offline_access" for s in xero.READ_SCOPES.split())
+    scopes = xero.READ_SCOPES.split()
+    assert len(scopes) == 18 and all(s.endswith(".read") or s == "offline_access" for s in scopes)
+    assert "accounting.transactions.read" not in scopes and "accounting.reports.read" not in scopes
     assert "state=" in xero.authorize_url()
 
 
@@ -344,3 +346,49 @@ def test_post_api_request_hook_records_usage():
 def test_first_run_skill_exists():
     t = (ROOT / "deploy/sol/skills/first-run/SKILL.md").read_text()
     assert t.startswith("---\nname: sol-first-run") and "Founder-Paid Expense Schedule 2026" in t
+
+
+def test_xero_connect_redirects_with_fresh_state(monkeypatch):
+    import threading, urllib.request, urllib.error
+    from http.server import HTTPServer
+    from plugins.sol_finance import server
+    monkeypatch.setenv("SOL_PUBLIC_URL", "https://sol.example.app")
+    monkeypatch.setenv("XERO_CLIENT_ID", "real-client-id")
+    srv = HTTPServer(("127.0.0.1", 0), server._H)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, *a, **k):
+            return None
+    op = urllib.request.build_opener(NoRedirect)
+    locs = []
+    for _ in range(2):
+        with pytest.raises(urllib.error.HTTPError) as e:
+            op.open(f"http://127.0.0.1:{srv.server_port}/xero-connect")
+        assert e.value.code == 302
+        locs.append(e.value.headers["Location"])
+    srv.shutdown()
+    assert locs[0].startswith("https://login.xero.com/identity/connect/authorize?")
+    assert "client_id=real-client-id" in locs[0] and "xero-callback" in locs[0]
+    assert locs[0] != locs[1]  # fresh state each time
+
+
+def test_xero_callback_discards_tokens_for_other_orgs(monkeypatch):
+    monkeypatch.setenv("XERO_CLIENT_ID", "c")
+    monkeypatch.setenv("XERO_CLIENT_SECRET", "s")
+    xero.authorize_url()
+    st = common.load_state("xero_oauth_state.json", {})["state"]
+
+    def fake(method, url, **kw):
+        if "connect/token" in url:
+            return {"access_token": "a", "refresh_token": "r", "expires_in": 1800}
+        return [{"tenantId": "t", "tenantName": "Somebody Else LLC"}]
+
+    monkeypatch.setattr(common, "http_json", fake)
+    assert xero.handle_callback("code", st) is False
+    assert common.load_state("xero_tokens.json", {}) == {}
+    xero.authorize_url()
+    st = common.load_state("xero_oauth_state.json", {})["state"]
+    monkeypatch.setattr(common, "http_json", lambda m, u, **k: {"access_token": "a", "refresh_token": "r", "expires_in": 1800}
+                        if "connect/token" in u else [{"tenantId": "t", "tenantName": "FinVerified, Inc."}])
+    assert xero.handle_callback("code", st) is True and xero.org_name() == "FinVerified, Inc."

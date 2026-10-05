@@ -19,10 +19,27 @@ from . import common
 AUTH_URL = "https://login.xero.com/identity/connect/authorize"
 TOKEN_URL = "https://identity.xero.com/connect/token"
 API = "https://api.xero.com/api.xro/2.0"
-READ_SCOPES = ("offline_access accounting.invoices.read accounting.payments.read "
-               "accounting.banktransactions.read accounting.contacts.read accounting.settings.read "
-               "accounting.reports.profitandloss.read accounting.reports.balancesheet.read "
-               "accounting.reports.trialbalance.read")
+# Granular read scopes only (Xero apps created after 2026-03-02 cannot use the broad ones).
+READ_SCOPES = " ".join([
+    "offline_access",
+    "accounting.settings.read",
+    "accounting.contacts.read",
+    "accounting.attachments.read",
+    "accounting.budgets.read",
+    "accounting.payments.read",
+    "accounting.invoices.read",
+    "accounting.banktransactions.read",
+    "accounting.manualjournals.read",
+    "accounting.reports.aged.read",
+    "accounting.reports.balancesheet.read",
+    "accounting.reports.banksummary.read",
+    "accounting.reports.budgetsummary.read",
+    "accounting.reports.executivesummary.read",
+    "accounting.reports.profitandloss.read",
+    "accounting.reports.trialbalance.read",
+    "accounting.reports.taxreports.read",
+    "accounting.reports.tenninetynine.read",
+])
 WRITE_ENABLED = os.environ.get("SOL_PHASE", "1") not in ("1", "")  # Phase 2+ only
 
 
@@ -89,8 +106,14 @@ def handle_callback(code: str, state: str) -> bool:
     tok = common.http_json("POST", TOKEN_URL, headers={"Authorization": _basic()},
                            form={"grant_type": "authorization_code", "code": code, "redirect_uri": redirect_uri()})
     tok["expires_at"] = time.time() + int(tok.get("expires_in", 1800)) - 60
-    common.save_state("xero_tokens.json", tok)
     common.save_state("xero_oauth_state.json", {})
+    # /xero-connect is public, so only keep tokens that are for the FinVerified organisation.
+    conns = common.http_json("GET", "https://api.xero.com/connections",
+                             headers={"Authorization": "Bearer " + tok["access_token"]})
+    want = os.environ.get("SOL_XERO_ORG_NAME", "FinVerified").lower()
+    if not any(want in str(c.get("tenantName", "")).lower() for c in conns or []):
+        return False
+    common.save_state("xero_tokens.json", tok)
     return True
 
 
@@ -108,11 +131,7 @@ def _token() -> str:
 
 
 def _tenant() -> str:
-    conns = common.http_json("GET", "https://api.xero.com/connections",
-                             headers={"Authorization": "Bearer " + _token()})
-    if not conns:
-        raise XeroPolicyError("no Xero organisation connected")
-    return conns[0]["tenantId"]
+    return _tenant_info()["tenantId"]
 
 
 def _call(method: str, endpoint: str, body: Any = None) -> Any:
@@ -127,3 +146,16 @@ def read(endpoint: str) -> Any:
                      "Organisation", "Items", "Payments"}:
         raise XeroPolicyError(f"Xero endpoint not readable: {first}")
     return _call("GET", endpoint)
+
+
+def org_name() -> str:
+    """Name only of the connected organisation."""
+    return _tenant_info()["tenantName"]
+
+
+def _tenant_info() -> Dict[str, Any]:
+    conns = common.http_json("GET", "https://api.xero.com/connections",
+                             headers={"Authorization": "Bearer " + _token()})
+    if not conns:
+        raise XeroPolicyError("no Xero organisation connected")
+    return conns[0]
