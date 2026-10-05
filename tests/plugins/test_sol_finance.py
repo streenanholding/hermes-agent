@@ -304,3 +304,12 @@ def test_register_adds_nine_tools_in_sol_toolset(monkeypatch):
     assert len(reg) == 9 and {r["toolset"] for r in reg} == {"sol_finance"}
     assert all(r["schema"]["name"] == r["name"] and callable(r["handler"]) for r in reg)
     assert hooks == ["pre_tool_call"]
+
+
+def test_startup_hook_is_shipped_and_wired():
+    yaml = pytest.importorskip("yaml")
+    d = ROOT / "deploy/sol/hooks/sol-startup"
+    meta = yaml.safe_load((d / "HOOK.yaml").read_text())
+    assert meta["events"] == ["gateway:startup"]
+    assert "async def handle(event_type, context)" in (d / "handler.py").read_text()
+    assert "scripts hooks" in (ROOT / "docker/stage2-hook.sh").read_text()

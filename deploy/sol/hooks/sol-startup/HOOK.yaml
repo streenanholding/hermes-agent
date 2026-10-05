@@ -1,0 +1,4 @@
+name: sol-startup
+description: Start Sol's OAuth callback listener and seed his three schedules when the gateway starts.
+events:
+  - gateway:startup
