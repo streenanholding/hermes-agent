@@ -19,8 +19,10 @@ from . import common
 AUTH_URL = "https://login.xero.com/identity/connect/authorize"
 TOKEN_URL = "https://identity.xero.com/connect/token"
 API = "https://api.xero.com/api.xro/2.0"
-READ_SCOPES = ("offline_access accounting.transactions.read accounting.contacts.read "
-               "accounting.settings.read accounting.reports.read")
+READ_SCOPES = ("offline_access accounting.invoices.read accounting.payments.read "
+               "accounting.banktransactions.read accounting.contacts.read accounting.settings.read "
+               "accounting.reports.profitandloss.read accounting.reports.balancesheet.read "
+               "accounting.reports.trialbalance.read")
 WRITE_ENABLED = os.environ.get("SOL_PHASE", "1") not in ("1", "")  # Phase 2+ only
 
 
