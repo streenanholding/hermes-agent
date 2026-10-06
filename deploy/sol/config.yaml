@@ -15,7 +15,10 @@ model:
   # The key allows exactly two models; budget is enforced upstream.
   provider: "custom"
   base_url: "https://litellm-gateway-production-774e.up.railway.app/v1"
-  # api_key comes from OPENAI_API_KEY in Railway (LiteLLM virtual key).
+  # LiteLLM virtual key from OPENAI_API_KEY in Railway. It must be referenced
+  # explicitly: for non-openai.com hosts Hermes ignores OPENAI_API_KEY (#28660)
+  # and would send the "no-key-required" placeholder, which LiteLLM rejects (401).
+  api_key: "${OPENAI_API_KEY}"
   default: "openrouter/anthropic/claude-haiku-4.5"   # filing, categorizing, inbox parsing
   max_tokens: 4096
 
