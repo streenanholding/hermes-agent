@@ -1,0 +1,49 @@
+# Hermes config for hermes-carly (Carly Finkle, Chief of Staff). v1.
+# Lives at $HERMES_HOME/config.yaml on the Railway volume.
+# AGENTS.md states the intent; this file and the env enforce it.
+
+model:
+  # All inference goes through LiteLLM. No direct provider key exists in
+  # Carly's environment. The virtual key carries the budget cap ($40/month
+  # to start) and the allowed-model list.
+  provider: "custom"
+  base_url: "https://litellm-gateway-production-774e.up.railway.app/v1"
+  # api_key comes from OPENAI_API_KEY in the Railway environment: a LiteLLM
+  # virtual key, never a raw provider key.
+
+  # "carly-fast" and "carly-strong" are LiteLLM model ALIASES. They must exist
+  # in LiteLLM and be allowed on Carly's virtual key before first use.
+  #   carly-fast   = anthropic/claude-haiku-5-5   (reminders, sorting, tracking)
+  #   carly-strong = anthropic/claude-sonnet-5-5  (writing and judgment)
+  default: "carly-fast"
+  max_tokens: 4096
+
+# ── Platform toolsets: THE capability allowlist ───────────────────────────
+platform_toolsets:
+  slack:
+    - web            # research public pages
+    - file           # her Drive-mirrored notes and trackers on her volume only
+    - memory
+    - todo
+    - cronjob        # scheduled reminders and follow-up checks
+    - clarify        # ask before acting when unsure
+    - session_search
+    - skills
+  # NOT enabled: terminal, process, code_execution, browser, delegation,
+  # image_gen, video_gen, tts, computer_use. Gmail, Calendar, Drive and Linear
+  # have no toolset in this repo for Carly yet (see PR description).
+
+tool_loop_guardrails:
+  enabled: true
+  max_consecutive_identical_calls: 3   # retry at most twice, then stop
+
+memory:
+  enabled: true
+
+max_concurrent_sessions: 3
+group_sessions_per_user: true
+
+telemetry:
+  enabled: false
+updates:
+  check: false
