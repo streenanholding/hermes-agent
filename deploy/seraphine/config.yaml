@@ -1,4 +1,4 @@
-# Hermes config for hermes-seraphine (v1 — partnership coordinator)
+# Hermes config for hermes-seraphine (v2 — Head of IT & Services).
 # Lives at $HERMES_HOME/config.yaml on the Railway volume.
 #
 # Everything about what Seraphine CAN do is decided here and by the
@@ -17,7 +17,9 @@ model:
   # Cheap by default. "seraphine-fast" and "seraphine-strong" are model
   # ALIASES defined inside LiteLLM, so the real model behind each can be
   # swapped in the LiteLLM UI without touching this service. AGENTS.md says
-  # when to escalate to strong.
+  # when to escalate to strong. Mapping per AGENTS.md section 11:
+  #   seraphine-fast = anthropic/claude-haiku-5-5 (routine checks, log reading, tracking)
+  #   seraphine-strong = anthropic/claude-sonnet-5-5 (diagnosis, write-ups)
   default: "seraphine-fast"
 
   # Keep responses bounded. Slack is the surface; nobody wants 8k tokens.
