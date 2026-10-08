@@ -5,14 +5,19 @@
 # credentials in her Railway environment. AGENTS.md states the intent;
 # this file and the env enforce it.
 
+_config_version: 37   # schema version this file is written for (skips legacy migration)
+
 model:
   # All inference goes through LiteLLM. No direct provider key exists in
   # Seraphine's environment. The virtual key carries the budget cap and the
   # allowed-model list, so the cap is enforced upstream of the agent.
   provider: "custom"
   base_url: "https://litellm-gateway-production-774e.up.railway.app/v1"
-  # api_key comes from OPENAI_API_KEY in the Railway environment — a LiteLLM
-  # virtual key, never a raw provider key.
+  # LiteLLM virtual key from OPENAI_API_KEY in Railway, never a raw provider
+  # key. It must be referenced explicitly: for non-openai.com hosts Hermes
+  # ignores OPENAI_API_KEY (#28660) and would send the "no-key-required"
+  # placeholder, which LiteLLM rejects (401).
+  api_key: "${OPENAI_API_KEY}"
 
   # Cheap by default. "seraphine-fast" and "seraphine-strong" are model
   # ALIASES defined inside LiteLLM, so the real model behind each can be

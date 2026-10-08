@@ -2,14 +2,21 @@
 # Lives at $HERMES_HOME/config.yaml on the Railway volume.
 # AGENTS.md states the intent; this file and the env enforce it.
 
+_config_version: 37   # schema version this file is written for (skips legacy migration)
+
+timezone: America/New_York
+
 model:
   # All inference goes through LiteLLM. No direct provider key exists in
   # Carly's environment. The virtual key carries the budget cap ($40/month
   # to start) and the allowed-model list.
   provider: "custom"
   base_url: "https://litellm-gateway-production-774e.up.railway.app/v1"
-  # api_key comes from OPENAI_API_KEY in the Railway environment: a LiteLLM
-  # virtual key, never a raw provider key.
+  # LiteLLM virtual key from OPENAI_API_KEY in Railway, never a raw provider
+  # key. It must be referenced explicitly: for non-openai.com hosts Hermes
+  # ignores OPENAI_API_KEY (#28660) and would send the "no-key-required"
+  # placeholder, which LiteLLM rejects (401).
+  api_key: "${OPENAI_API_KEY}"
 
   # "carly-fast" and "carly-strong" are LiteLLM model ALIASES. They must exist
   # in LiteLLM and be allowed on Carly's virtual key before first use.
