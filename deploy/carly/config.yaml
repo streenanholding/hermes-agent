@@ -1,0 +1,44 @@
+# Hermes config for hermes-carly (Carly Finkle, Chief of Staff).
+# Seeded to $HERMES_HOME by docker/stage2-hook.sh when HERMES_AGENT_DEPLOY=carly.
+# Phase 1: private Telegram line to Rick only. No email, Slack, or money tools yet.
+
+_config_version: 37
+
+timezone: America/New_York
+
+model:
+  provider: "custom"
+  base_url: "https://litellm-gateway-production-774e.up.railway.app/v1"
+  # LiteLLM virtual key "carly-cos" from OPENAI_API_KEY in Railway. Budget cap lives in LiteLLM.
+  api_key: "${OPENAI_API_KEY}"
+  default: "openrouter/anthropic/claude-haiku-4.5"
+  max_tokens: 4096
+
+# Capability allowlist. Telegram is the only platform in phase 1.
+# Not listed = not available: terminal, process, code_execution, browser,
+# delegation, image_gen, video_gen, tts, computer_use.
+platform_toolsets:
+  telegram:
+    - web
+    - file
+    - memory
+    - todo
+    - cronjob
+    - clarify
+    - session_search
+    - skills
+
+tool_loop_guardrails:
+  enabled: true
+  max_consecutive_identical_calls: 3
+
+memory:
+  enabled: true
+
+max_concurrent_sessions: 2
+group_sessions_per_user: true
+
+telemetry:
+  enabled: false
+updates:
+  check: false
