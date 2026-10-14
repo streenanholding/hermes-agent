@@ -78,6 +78,15 @@ platform_toolsets:
     - skills
 
 tool_loop_guardrails:
+  telegram:
+    - sol_finance
+    - file
+    - memory
+    - todo
+    - cronjob
+    - clarify
+    - session_search
+    - skills
   enabled: true
   max_consecutive_identical_calls: 3
 
