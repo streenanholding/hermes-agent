@@ -10,13 +10,33 @@ import base64
 import os
 import secrets
 import time
+from email.message import EmailMessage
 from typing import Any, Dict, List
 from urllib.parse import urlencode
 
 from . import common, fraud, pii, slack_dm, xero
 
 SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
+SEND_SCOPE = "https://www.googleapis.com/auth/gmail.send"
 MAILBOX = "sol@finverified.ai"
+# Hard-coded: report email may only ever go to these two addresses.
+ALLOWED_RECIPIENTS = ("rick@finverified.ai", "ncoy@finverified.ai")
+
+
+class GmailPolicyError(PermissionError):
+    pass
+
+
+def _phase() -> int:
+    try:
+        return int(os.environ.get("SOL_PHASE", "1") or 1)
+    except ValueError:
+        return 1
+
+
+def scopes() -> str:
+    """Phase 1: readonly. Phase 2+: readonly plus send."""
+    return SCOPE + (" " + SEND_SCOPE if _phase() >= 2 else "")
 
 
 def authorize_url() -> str:
@@ -24,7 +44,7 @@ def authorize_url() -> str:
     common.save_state("gmail_oauth_state.json", {"state": state})
     return "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode({
         "client_id": os.environ.get("GOOGLE_OAUTH_CLIENT_ID", ""), "redirect_uri": xero.public_url() + "/gmail-callback",
-        "response_type": "code", "scope": SCOPE, "access_type": "offline", "prompt": "consent",
+        "response_type": "code", "scope": scopes(), "access_type": "offline", "prompt": "consent",
         "login_hint": MAILBOX, "state": state})
 
 
@@ -73,6 +93,32 @@ def _body(payload: Dict[str, Any]) -> str:
             if inner:
                 return inner
     return ""
+
+
+def send_report(subject: str, html_body: str) -> Dict[str, Any]:
+    """Email an HTML report from sol@finverified.ai to the fixed allowlist (Phase 2+ only).
+
+    No CC, BCC, attachments or caller-chosen recipients. The body is PII-scrubbed first.
+    """
+    if _phase() < 2:
+        raise GmailPolicyError("Report email is disabled until Phase 2 (SOL_PHASE >= 2)")
+    recipients = list(ALLOWED_RECIPIENTS)
+    bad = [r for r in recipients if r not in ALLOWED_RECIPIENTS]
+    if bad:
+        raise GmailPolicyError("Recipient is not in the allowlist; nothing was sent")
+    subject = pii.scrub(str(subject or "")).strip()
+    if not subject or "\r" in subject or "\n" in subject:
+        raise GmailPolicyError("Subject must be a single non-empty line")
+    msg = EmailMessage()
+    msg["From"] = MAILBOX
+    msg["To"] = ", ".join(recipients)
+    msg["Subject"] = subject
+    msg.set_content("This report is HTML. Please view it in an HTML-capable mail client.")
+    msg.add_alternative(pii.scrub(str(html_body or "")), subtype="html")
+    raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
+    common.http_json("POST", "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+                     headers={"Authorization": "Bearer " + _access()}, body={"raw": raw})
+    return {"sent": True, "to": recipients, "subject": subject}
 
 
 def search(query: str, max_results: int = 10) -> Dict[str, Any]:

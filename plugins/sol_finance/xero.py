@@ -41,6 +41,17 @@ READ_SCOPES = " ".join([
     "accounting.reports.tenninetynine.read",
 ])
 WRITE_ENABLED = os.environ.get("SOL_PHASE", "1") not in ("1", "")  # Phase 2+ only
+# Granular write scopes (the read scope names without ".read"), requested only in Phase 2+.
+WRITE_SCOPES = " ".join([
+    "accounting.banktransactions",
+    "accounting.manualjournals",
+    "accounting.invoices",
+])
+
+
+def requested_scopes() -> str:
+    """Phase 1: read scopes only. Phase 2+: read scopes plus the DRAFT write scopes."""
+    return READ_SCOPES + (" " + WRITE_SCOPES if WRITE_ENABLED else "")
 
 
 class XeroPolicyError(PermissionError):
@@ -91,7 +102,7 @@ def authorize_url() -> str:
     state = secrets.token_urlsafe(24)
     common.save_state("xero_oauth_state.json", {"state": state, "at": time.time()})
     return AUTH_URL + "?" + urlencode({"response_type": "code", "client_id": os.environ.get("XERO_CLIENT_ID", ""),
-                                       "redirect_uri": redirect_uri(), "scope": READ_SCOPES, "state": state})
+                                       "redirect_uri": redirect_uri(), "scope": requested_scopes(), "state": state})
 
 
 def _basic() -> str:

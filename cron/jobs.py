@@ -1083,6 +1083,16 @@ def compute_next_run(schedule: Dict[str, Any], last_run_at: Optional[str] = None
                 base_time = _ensure_aware(datetime.fromisoformat(last_run_at))
             except Exception:
                 base_time = now
+        # Optional per-job IANA timezone: evaluate the cron expression on that
+        # zone's wall clock instead of the configured Hermes timezone.
+        job_tz = schedule.get("timezone")
+        if job_tz:
+            try:
+                from zoneinfo import ZoneInfo
+
+                base_time = base_time.astimezone(ZoneInfo(str(job_tz)))
+            except Exception:
+                logger.warning("Unknown job timezone %r; using the Hermes timezone", job_tz)
         cron = croniter(expr, base_time)
         next_run = cron.get_next(datetime)
         return next_run.isoformat()
@@ -1797,6 +1807,7 @@ def create_job(
     attach_to_session: Optional[bool] = None,
     monitor_script: Optional[str] = None,
     monitor_url: Optional[str] = None,
+    timezone: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Create a new cron job.
@@ -1859,6 +1870,11 @@ def create_job(
         The created job dict
     """
     parsed_schedule = parse_schedule(schedule)
+    if timezone and parsed_schedule.get("kind") == "cron":
+        from zoneinfo import ZoneInfo
+
+        ZoneInfo(timezone)  # raises on an unknown zone
+        parsed_schedule["timezone"] = timezone
 
     # Normalize repeat: treat 0 or negative values as None (infinite)
     if repeat is not None and repeat <= 0:

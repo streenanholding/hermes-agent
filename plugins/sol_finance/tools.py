@@ -111,6 +111,10 @@ def h_gmail(args, **_):
     return _out({"success": False, "error": "unknown action"})
 
 
+def h_email_report(args, **_):
+    return _run(lambda: gmail.send_report(args.get("subject", ""), args.get("html_body", "")))
+
+
 def h_dm(args, **_):
     return _run(lambda: slack_dm.dm_rick(args.get("text", "")))
 
@@ -167,6 +171,10 @@ TOOLS = [
         {"search": "search messages", "connect_link": "one-time consent URL for Rick"}, {"query": _s("Gmail search"), "max_results": {"type": "integer"}})),
     ("sol_dm_rick", "💬", h_dm, {"name": "sol_dm_rick", "description": "Send a Slack DM to Rick (only Rick; text is PII-scrubbed).",
         "parameters": {"type": "object", "properties": {"text": _s("message")}, "required": ["text"]}}),
+    ("sol_email_report", "📧", h_email_report, {"name": "sol_email_report",
+        "description": "Email an HTML report from sol@finverified.ai to Rick and Nancy only (fixed recipients; no CC/BCC/attachments). Phase 2+ only; body is PII-scrubbed.",
+        "parameters": {"type": "object", "properties": {"subject": _s("single-line email subject"), "html_body": _s("report body as HTML")},
+                       "required": ["subject", "html_body"]}}),
     ("sol_approval", "✅", h_approval, _schema("sol_approval", "Approval ledger. Approvals count only from Rick's (or Nancy's for countersign/equity) Slack ID, tied to an item ID, and void if the item changes.",
         {"propose": "register an item + payload", "record": "record an approval from the CURRENT Slack sender (pass their message text)", "check": "is item approved for this exact payload"},
         {"item_id": _s("e.g. SOL-012"), "kind": _s("general|payment|tax|countersign|equity"), "payload": {"type": "object"}, "text": _s("sender's message text")})),

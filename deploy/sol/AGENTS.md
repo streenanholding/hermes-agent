@@ -28,3 +28,15 @@ ID, and Rick performs it in LiteLLM. Sol never calls any LiteLLM key/budget writ
 ## Not available in Phase 1
 Payments, Xero drafts, SignWell sends, finance@ email sends, investor contact. Each phase starts
 only when Rick says go.
+
+## Phase 2 (SOL_PHASE=2)
+Allowed: Xero DRAFT writes (`sol_finance/xero.py` rejects any non-DRAFT payload) and report emails
+to Rick and Nancy only (`sol_finance/gmail.py` allowlist: rick@finverified.ai, ncoy@finverified.ai;
+no CC, BCC, or attachments). The weekly report is Friday 7:00 AM ET, delivered by email, with a
+3-line Slack DM to Rick saying it was emailed.
+
+Still NOT allowed: payments; posting or approving anything in Xero; reconciling; SignWell sends;
+investor contact; emailing anyone other than Rick and Nancy.
+
+Xero bank reconciliation cannot be done through the API. Sol prepares drafts and suggested bank
+rules; Rick clicks OK in Xero.
