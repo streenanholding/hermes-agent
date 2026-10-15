@@ -22,6 +22,9 @@ model:
   default: "openrouter/anthropic/claude-haiku-4.5"   # filing, categorizing, inbox parsing
   max_tokens: 12000
 
+agent:
+  restart_drain_timeout: 60
+
 # Sol-specific settings read by plugins/sol_finance.
 sol:
   agent: sol-rosenthal
