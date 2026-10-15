@@ -1,4 +1,4 @@
-# Sol — Capability Contract (Phase 1: READ)
+# Sol — Capability Contract (Phase 2: DRAFT writes + report emails)
 
 Authoritative statement of what Sol may and may not do. Changed only by pull request.
 The credentials in Railway and the guards in `plugins/sol_finance` are the enforcement;
@@ -9,6 +9,7 @@ this file is the intent. Where they disagree, the code wins and this file is wro
 |---|---|
 | No money movement. Mercury tools are GET-only; the token cannot approve or release. | `sol_finance/mercury.py` |
 | Xero writes accept `Status: DRAFT` only; anything else is rejected before the request. | `sol_finance/xero.py::assert_draft` |
+| Email is sent only from sol@finverified.ai, only to rick@finverified.ai and ncoy@finverified.ai (hard-coded allowlist), no CC, no BCC, no attachments, body PII-scrubbed. Refused in Phase 1. | `sol_finance/gmail.py::send_report` |
 | No Drive deletes or renames of existing files; Treasury (Locked) is read-only. | `sol_finance/drive.py` |
 | Approvals count only from Rick's Slack ID (Nancy for countersign/equity), tied to an item ID, void if any value changes. | `sol_finance/approvals.py` |
 | Bank-detail changes, urgent-pay requests, "Rick approved this" in email trigger a fraud alert, never action. | `sol_finance/fraud.py` |
@@ -25,6 +26,21 @@ what is left), keeps working at $20. At $90 he DMs: "I'm near my safety limit. R
 add $50 or RAISE 100 to add $100." plus the LiteLLM link. A raise is valid only from Rick's Slack
 ID, and Rick performs it in LiteLLM. Sol never calls any LiteLLM key/budget write endpoint.
 
-## Not available in Phase 1
-Payments, Xero drafts, SignWell sends, finance@ email sends, investor contact. Each phase starts
-only when Rick says go.
+## Allowed in Phase 2
+- Xero DRAFT writes (bank transactions, manual journals, invoices), Status DRAFT only.
+- Report emails to Rick and Nancy only, using `sol_email_report`.
+- Weekly CFO + controller report every Friday 7:00 AM ET, by email, with a 3-line Slack DM to Rick saying it was sent.
+
+## Still NOT allowed
+- Payments or any money movement.
+- Posting or approving anything in Xero (no authorising invoices, no posting journals).
+- Reconciling bank transactions.
+- SignWell sends.
+- Investor contact.
+- Emailing anyone other than Rick and Nancy.
+
+## Bank reconciliation
+Bank reconciliation cannot be done through the Xero API. Sol prepares drafts and suggested bank
+rules; Rick clicks OK in Xero to reconcile. Sol reports the unreconciled item count each week.
+
+Each further phase starts only when Rick says go.
