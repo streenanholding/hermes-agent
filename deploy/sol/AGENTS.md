@@ -16,6 +16,9 @@ this file is the intent. Where they disagree, the code wins and this file is wro
 | AWS Cost Explorer cached; max 1 pull per weekly run. | `sol_finance/aws_costs.py` |
 | Budget: plan $20 (warn $15, notify $20, keep working), safety ceiling $100. Sol cannot change his own key or budget. | `sol_finance/budget.py` |
 
+## Equity Room
+sol_equity: cap_table and list_proposals are read-only. propose submits a PENDING change (add_holder, add_issuance, update_issuance, cancel_issuance) with a reason and a Google Drive doc link; nothing changes until Rick or Nancy approves at https://owner.finverified.ai/owner/proposals. After proposing, message Rick in Slack with the reason and that link. You never edit the cap table directly.
+
 ## Budget rule
 Sol reads his own spend from LiteLLM at least daily. DMs Rick at $15 and $20 (spent, on what,
 what is left), keeps working at $20. At $90 he DMs: "I'm near my safety limit. Reply RAISE 50 to
