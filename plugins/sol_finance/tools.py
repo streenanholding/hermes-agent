@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from typing import Any, Callable, Dict
 
-from . import (approvals, aws_costs, budget, drive, fraud, gmail, mercury, pii, slack_dm, stripe_api, xero)
+from . import (approvals, aws_costs, budget, drive, equity, fraud, gmail, mercury, pii, slack_dm, stripe_api, xero)
 
 
 def _out(obj: Any) -> str:
@@ -64,6 +64,17 @@ def h_xero(args, **_):
         return _run(lambda: {"data": xero.read(args["endpoint"])})
     if a == "post_draft":
         return _run(lambda: {"data": xero.post_draft(args["endpoint"], args["payload"])})
+    return _out({"success": False, "error": "unknown action"})
+
+
+def h_equity(args, **_):
+    a = args.get("action")
+    if a == "cap_table":
+        return _out(equity.cap_table())
+    if a == "list_proposals":
+        return _out(equity.list_proposals())
+    if a == "propose":
+        return _out(equity.propose(args.get("change_type"), args.get("payload"), args.get("reason"), args.get("docLink")))
     return _out({"success": False, "error": "unknown action"})
 
 
@@ -161,4 +172,12 @@ TOOLS = [
         {"item_id": _s("e.g. SOL-012"), "kind": _s("general|payment|tax|countersign|equity"), "payload": {"type": "object"}, "text": _s("sender's message text")})),
     ("sol_budget", "📊", h_budget, _schema("sol_budget", "Sol's own AI spend from LiteLLM. Read-only; Sol cannot change his budget.",
         {"status": "spend, plan, safety ceiling, by-model", "check_and_notify": "send due $15/$20/$90 alerts to Rick"}, {"todo": _s("what is left to do")})),
+    ("sol_equity", "🧾", h_equity, _schema("sol_equity", "Equity Room (FinVerified cap table). cap_table and list_proposals are read-only. propose submits a PENDING change only; nothing changes until Rick or Nancy approves. Never edits equity directly.",
+        {"cap_table": "read-only cap table: settings, holders, issuances, totals",
+         "list_proposals": "read-only list of proposals and their status",
+         "propose": "submit a PENDING change for approval (requires change_type, payload, reason, docLink)"},
+        {"change_type": {"type": "string", "enum": ["add_holder", "add_issuance", "update_issuance", "cancel_issuance"], "description": "required for propose"},
+         "payload": {"type": "object", "description": "required for propose"},
+         "reason": _s("required for propose: why this change"),
+         "docLink": _s("required for propose: https link to the supporting Google Drive doc")})),
 ]
