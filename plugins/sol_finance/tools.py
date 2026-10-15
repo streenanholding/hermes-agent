@@ -111,6 +111,11 @@ def h_gmail(args, **_):
     return _out({"success": False, "error": "unknown action"})
 
 
+def h_email_report(args, **_):
+    # No recipient argument exists: gmail.send_report only ever mails Rick and Nancy.
+    return _run(lambda: gmail.send_report(args.get("subject", ""), args.get("html_body", "")))
+
+
 def h_dm(args, **_):
     return _run(lambda: slack_dm.dm_rick(args.get("text", "")))
 
@@ -155,7 +160,7 @@ TOOLS = [
     ("sol_stripe", "💳", h_stripe, _schema("sol_stripe", "Stripe, READ ONLY.",
         {"summary": "balance, MRR estimate, payouts", "balance": "raw balance", "charges": "charges", "payouts": "payouts",
          "subscriptions": "subscriptions", "balance_transactions": "balance transactions incl. fees"}, {"limit": {"type": "integer"}})),
-    ("sol_xero", "📒", h_xero, _schema("sol_xero", "Xero. Read-only now; writes accept Status DRAFT only and are disabled until Phase 2.",
+    ("sol_xero", "📒", h_xero, _schema("sol_xero", "Xero. Reads always; writes (Phase 2+) accept Status DRAFT only. Cannot post, approve or reconcile.",
         {"connect_link": "Xero consent URL + redirect URI for Rick", "org": "connected organisation name only", "read": "GET an accounting endpoint", "post_draft": "Phase 2: create a DRAFT"},
         {"endpoint": _s("e.g. Accounts, Invoices?page=1, Reports/ProfitAndLoss"), "payload": {"type": "object"}})),
     ("sol_aws", "☁️", h_aws, _schema("sol_aws", "AWS Cost Explorer/Budgets, read only. One live pull per week, cached.",
@@ -163,8 +168,12 @@ TOOLS = [
     ("sol_drive", "📁", h_drive, _schema("sol_drive", "Google Drive. Create folders/sheets in FinVerified Finance only; read Treasury; no deletes/renames.",
         {"shared_drives": "list shared drives", "list": "list a folder", "read": "read a file as text", "create_folder": "new folder", "create_sheet": "new Sheet from CSV"},
         {"folder_id": _s("folder id"), "file_id": _s("file id"), "name": _s("name"), "parent_id": _s("parent folder id"), "csv": _s("CSV text")})),
-    ("sol_gmail", "✉️", h_gmail, _schema("sol_gmail", "Gmail read-only for sol@finverified.ai. Fraud-signal emails are withheld and reported.",
+    ("sol_gmail", "✉️", h_gmail, _schema("sol_gmail", "Gmail search (read-only) for sol@finverified.ai. Fraud-signal emails are withheld and reported.",
         {"search": "search messages", "connect_link": "one-time consent URL for Rick"}, {"query": _s("Gmail search"), "max_results": {"type": "integer"}})),
+    ("sol_email_report", "📧", h_email_report, {"name": "sol_email_report",
+        "description": "Email the weekly report from sol@finverified.ai. Recipients are fixed in code (Rick and Nancy only); no CC, BCC or attachments. Phase 2+. Body is PII-scrubbed.",
+        "parameters": {"type": "object", "properties": {"subject": _s("single-line subject"), "html_body": _s("report body as HTML")},
+                       "required": ["subject", "html_body"]}}),
     ("sol_dm_rick", "💬", h_dm, {"name": "sol_dm_rick", "description": "Send a Slack DM to Rick (only Rick; text is PII-scrubbed).",
         "parameters": {"type": "object", "properties": {"text": _s("message")}, "required": ["text"]}}),
     ("sol_approval", "✅", h_approval, _schema("sol_approval", "Approval ledger. Approvals count only from Rick's (or Nancy's for countersign/equity) Slack ID, tied to an item ID, and void if the item changes.",

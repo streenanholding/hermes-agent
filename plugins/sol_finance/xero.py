@@ -1,7 +1,8 @@
-"""Xero OAuth (read scopes now) and the DRAFT-only write guard.
+"""Xero OAuth (read scopes; write scopes from Phase 2) and the DRAFT-only write guard.
 
-Phase 1 requests only .read scopes, so Xero itself rejects writes. `assert_draft`
-is the code-level guard Phase 2 builds on: any payload whose Status is not DRAFT
+Phase 1 requests only .read scopes, so Xero itself rejects writes. From Phase 2
+(SOL_PHASE >= 2) the bank transaction, manual journal and invoice write scopes are
+added. `assert_draft` is the code-level guard: any payload whose Status is not DRAFT
 is rejected before a request is made.
 """
 
@@ -41,6 +42,25 @@ READ_SCOPES = " ".join([
     "accounting.reports.tenninetynine.read",
 ])
 WRITE_ENABLED = os.environ.get("SOL_PHASE", "1") not in ("1", "")  # Phase 2+ only
+# Phase 2+: write scopes, same granular names as the read ones above with ".read" removed.
+# Xero itself cannot be restricted to DRAFT; assert_draft enforces that in code.
+WRITE_SCOPES = " ".join([
+    "accounting.banktransactions",
+    "accounting.manualjournals",
+    "accounting.invoices",
+])
+
+
+def _phase() -> int:
+    try:
+        return int(os.environ.get("SOL_PHASE", "1") or "1")
+    except ValueError:
+        return 1
+
+
+def requested_scopes() -> str:
+    """READ_SCOPES always; WRITE_SCOPES added only when SOL_PHASE >= 2."""
+    return READ_SCOPES + (" " + WRITE_SCOPES if _phase() >= 2 else "")
 
 
 class XeroPolicyError(PermissionError):
@@ -91,7 +111,7 @@ def authorize_url() -> str:
     state = secrets.token_urlsafe(24)
     common.save_state("xero_oauth_state.json", {"state": state, "at": time.time()})
     return AUTH_URL + "?" + urlencode({"response_type": "code", "client_id": os.environ.get("XERO_CLIENT_ID", ""),
-                                       "redirect_uri": redirect_uri(), "scope": READ_SCOPES, "state": state})
+                                       "redirect_uri": redirect_uri(), "scope": requested_scopes(), "state": state})
 
 
 def _basic() -> str:

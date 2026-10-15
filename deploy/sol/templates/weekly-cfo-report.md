@@ -14,6 +14,9 @@ Spent {{ai_spend}} of {{ai_plan}} plan · safety ceiling {{ai_ceiling}} · top u
 ## 3. Spend by vendor (this month to date vs. last month)
 Top 10 table. Anything up more than 20% gets a one-line reason.
 
+## 3b. Reconciliation, drafts and payroll check
+Unreconciled items {{count}} · Drafts awaiting Rick's approval {{list}} · Payroll journal vs Mercury {{match / difference}}
+
 ## 4. Decisions needed from Rick (approve/decline in Slack with the item ID)
 - [SOL-###] {{decision}} — impact {{$}} — deadline {{date}}
 

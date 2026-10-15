@@ -38,11 +38,11 @@ class _H(BaseHTTPRequestHandler):
             if u.path == "/xero-callback":
                 from . import xero
                 ok = xero.handle_callback(q.get("code", ""), q.get("state", ""))
-                return self._send(200 if ok else 400, "Xero connected (read-only). You can close this tab." if ok else "Xero connection failed.")
+                return self._send(200 if ok else 400, "Xero connected. You can close this tab." if ok else "Xero connection failed.")
             if u.path == "/gmail-callback":
                 from . import gmail
                 ok = gmail.handle_callback(q.get("code", ""), q.get("state", ""))
-                return self._send(200 if ok else 400, "Gmail connected (read-only). You can close this tab." if ok else "Gmail connection failed.")
+                return self._send(200 if ok else 400, "Gmail connected. You can close this tab." if ok else "Gmail connection failed.")
         except Exception:
             logger.exception("callback failed")
             return self._send(500, "error")
