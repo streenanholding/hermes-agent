@@ -76,8 +76,6 @@ platform_toolsets:
     - clarify
     - session_search
     - skills
-
-tool_loop_guardrails:
   telegram:
     - sol_finance
     - file
@@ -87,6 +85,8 @@ tool_loop_guardrails:
     - clarify
     - session_search
     - skills
+
+tool_loop_guardrails:
   enabled: true
   max_consecutive_identical_calls: 3
 
