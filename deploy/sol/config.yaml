@@ -20,7 +20,7 @@ model:
   # and would send the "no-key-required" placeholder, which LiteLLM rejects (401).
   api_key: "${OPENAI_API_KEY}"
   default: "openrouter/anthropic/claude-haiku-4.5"   # filing, categorizing, inbox parsing
-  max_tokens: 4096
+  max_tokens: 12000
 
 # Sol-specific settings read by plugins/sol_finance.
 sol:
