@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from typing import Any, Callable, Dict
 
-from . import (approvals, aws_costs, budget, drive, fraud, gmail, mercury, pii, slack_dm, stripe_api, xero)
+from . import (approvals, aws_costs, budget, drive, equity, fraud, gmail, mercury, pii, slack_dm, stripe_api, xero)
 
 
 def _out(obj: Any) -> str:
@@ -64,6 +64,12 @@ def h_xero(args, **_):
         return _run(lambda: {"data": xero.read(args["endpoint"])})
     if a == "post_draft":
         return _run(lambda: {"data": xero.post_draft(args["endpoint"], args["payload"])})
+    return _out({"success": False, "error": "unknown action"})
+
+
+def h_equity(args, **_):
+    if args.get("action") == "cap_table":
+        return _out(equity.cap_table())
     return _out({"success": False, "error": "unknown action"})
 
 
@@ -147,6 +153,8 @@ TOOLS = [
     ("sol_xero", "📒", h_xero, _schema("sol_xero", "Xero. Read-only now; writes accept Status DRAFT only and are disabled until Phase 2.",
         {"connect_link": "Xero consent URL + redirect URI for Rick", "org": "connected organisation name only", "read": "GET an accounting endpoint", "post_draft": "Phase 2: create a DRAFT"},
         {"endpoint": _s("e.g. Accounts, Invoices?page=1, Reports/ProfitAndLoss"), "payload": {"type": "object"}})),
+    ("sol_equity", "🧾", h_equity, _schema("sol_equity", "Equity Room (FinVerified cap table), READ ONLY. Never edits equity; propose changes to Rick/Nancy.",
+        {"cap_table": "read-only cap table: settings, holders, issuances, totals"})),
     ("sol_aws", "☁️", h_aws, _schema("sol_aws", "AWS Cost Explorer/Budgets, read only. One live pull per week, cached.",
         {"cost_by_month": "cost by month and service since start (default Jan 1)", "budgets": "AWS Budgets"}, {"start": _s("YYYY-MM-DD")})),
     ("sol_drive", "📁", h_drive, _schema("sol_drive", "Google Drive. Create folders/sheets in FinVerified Finance only; read Treasury; no deletes/renames.",

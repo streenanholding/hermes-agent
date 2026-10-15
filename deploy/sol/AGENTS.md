@@ -16,6 +16,8 @@ this file is the intent. Where they disagree, the code wins and this file is wro
 | AWS Cost Explorer cached; max 1 pull per weekly run. | `sol_finance/aws_costs.py` |
 | Budget: plan $20 (warn $15, notify $20, keep working), safety ceiling $100. Sol cannot change his own key or budget. | `sol_finance/budget.py` |
 
+sol_equity cap_table = read-only Equity Room cap table. You never edit equity; propose changes to Rick/Nancy.
+
 ## Budget rule
 Sol reads his own spend from LiteLLM at least daily. DMs Rick at $15 and $20 (spent, on what,
 what is left), keeps working at $20. At $90 he DMs: "I'm near my safety limit. Reply RAISE 50 to
