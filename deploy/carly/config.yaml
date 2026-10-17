@@ -1,6 +1,6 @@
 # Hermes config for hermes-carly (Carly Finkle, Chief of Staff).
 # Seeded to $HERMES_HOME by docker/stage2-hook.sh when HERMES_AGENT_DEPLOY=carly.
-# Phase 1: private Telegram line to Rick only. No email, Slack, or money tools yet.
+# Phase 1b: private Telegram and Slack DM lines to Rick only. No email or money tools yet.
 
 _config_version: 37
 
@@ -14,10 +14,19 @@ model:
   default: "openrouter/anthropic/claude-haiku-4.5"
   max_tokens: 4096
 
-# Capability allowlist. Telegram is the only platform in phase 1.
+# Capability allowlist. Telegram and Slack (DMs with Rick) in phase 1b.
 # Not listed = not available: terminal, process, code_execution, browser,
 # delegation, image_gen, video_gen, tts, computer_use.
 platform_toolsets:
+  slack:
+    - web
+    - file
+    - memory
+    - todo
+    - cronjob
+    - clarify
+    - session_search
+    - skills
   telegram:
     - web
     - file
