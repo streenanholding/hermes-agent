@@ -1,0 +1,4 @@
+name: carly_google
+version: 1.0.0
+description: "Carly (FinVerified chief of staff): Gmail, Calendar and Drive for one mailbox (CARLY_EMAIL) via user OAuth. No domain-wide delegation; policy enforced in code."
+author: "FinVerified"
