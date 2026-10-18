@@ -51,3 +51,17 @@ telemetry:
   enabled: false
 updates:
   check: false
+
+# Slack: reply right in the DM (no threads), one running conversation per DM.
+platforms:
+  slack:
+    enabled: true
+    extra:
+      reply_in_thread: false
+      dm_top_level_threads_as_sessions: false
+# Token saver: start a fresh, small conversation after 2 hours of quiet.
+# Long-term facts stay in memory; only the chat scrollback is dropped.
+session_reset:
+  mode: idle
+  idle_minutes: 120
+  notify: false
