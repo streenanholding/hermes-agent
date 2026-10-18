@@ -6,7 +6,7 @@
 # v1.3: private Telegram line to Rick; her own mailbox carol@finverified.ai (read,
 # search, draft, send — approved domains only, Rick and Nancy auto-copied, daily cap);
 # the Pay✓erified shared drive only. Web research, her own files, memory, todo, cron.
-# No Slack, money, patient data, production, GitHub or Railway.
+# Slack DM line to Rick. No money, patient data, production, GitHub or Railway.
 
 _config_version: 37
 
@@ -26,6 +26,16 @@ model:
 # Capability allowlist. Not listed = not available: terminal, process,
 # code_execution, browser, delegation, image_gen, video_gen, tts, computer_use.
 platform_toolsets:
+  slack:
+    - web
+    - file
+    - memory
+    - todo
+    - cronjob
+    - clarify
+    - session_search
+    - skills
+    - carol_google   # Gmail (CAROL_EMAIL) + Pay✓erified drive; policy enforced in plugins/carol_google
   telegram:
     - web
     - file
@@ -62,3 +72,22 @@ telemetry:
   enabled: false
 updates:
   check: false
+
+# Slack: reply right in the DM (no threads), one running conversation per DM.
+platforms:
+  slack:
+    enabled: true
+    extra:
+      reply_in_thread: false
+      dm_top_level_threads_as_sessions: false
+# Token saver: start a fresh, small conversation after 2 hours of quiet.
+session_reset:
+  mode: idle
+  idle_minutes: 120
+  notify: false
+# Slack: send only the final answer, no play-by-play messages.
+display:
+  platforms:
+    slack:
+      interim_assistant_messages: false
+      tool_progress: "off"
