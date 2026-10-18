@@ -1,0 +1,41 @@
+# Hermes config for hermes-vivian (Vivian Holmes).
+# Seeded to $HERMES_HOME by docker/stage2-hook.sh when HERMES_AGENT_DEPLOY=vivian.
+# DORMANT scaffold: converted from OpenClaw to Hermes, not deployed yet.
+# Before activating: rewrite SOUL.md + AGENTS.md, create a LiteLLM virtual key with a budget cap,
+# create the Railway service, and add Slack tokens. Tools stay minimal until the role is defined.
+_config_version: 37
+timezone: America/New_York
+model:
+  provider: "custom"
+  base_url: "https://litellm-gateway-production-774e.up.railway.app/v1"
+  api_key: "${OPENAI_API_KEY}"
+  default: "openrouter/anthropic/claude-haiku-4.5"
+  max_tokens: 2048
+# Minimal capability allowlist while dormant. No web, file, cron, terminal,
+# browser, code execution, delegation, email or money tools.
+platform_toolsets:
+  slack:
+    - memory
+    - clarify
+    - session_search
+tool_loop_guardrails:
+  enabled: true
+  max_consecutive_identical_calls: 3
+memory:
+  enabled: true
+max_concurrent_sessions: 1
+group_sessions_per_user: true
+telemetry:
+  enabled: false
+updates:
+  check: false
+platforms:
+  slack:
+    enabled: true
+    extra:
+      reply_in_thread: false
+      dm_top_level_threads_as_sessions: false
+session_reset:
+  mode: idle
+  idle_minutes: 120
+  notify: false
