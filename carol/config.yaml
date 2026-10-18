@@ -1,0 +1,51 @@
+# Hermes config for hermes-carol (Carol Remly — PayVerified connections and payer lead).
+# Seeded to $HERMES_HOME by docker/stage2-hook.sh when HERMES_AGENT_DEPLOY=carol.
+# Reviewed like code. Credentials in Railway are the enforcement; if this file
+# and the credentials disagree, the credentials win.
+#
+# Phase 1: private Telegram line to Rick. Web research, her own files, memory,
+# todo, cron. No email, Slack, money, patient data, production, GitHub or Railway.
+# Phase 2 (carol@finverified.ai mailbox) is added by pull request, not by chat.
+
+_config_version: 37
+
+timezone: America/New_York
+
+model:
+  provider: "custom"
+  base_url: "https://litellm-gateway-production-774e.up.railway.app/v1"
+  # LiteLLM virtual key "carol-payverified" from OPENAI_API_KEY in Railway.
+  # Must be referenced explicitly (Hermes ignores OPENAI_API_KEY for non-openai hosts).
+  # Budget cap and allowed models live in LiteLLM.
+  api_key: "${OPENAI_API_KEY}"
+  # Expert judgment is her job, so she runs on Sonnet. Short answers keep cost down.
+  default: "openrouter/anthropic/claude-sonnet-4.5"
+  max_tokens: 4096
+
+# Capability allowlist. Not listed = not available: terminal, process,
+# code_execution, browser, delegation, image_gen, video_gen, tts, computer_use.
+platform_toolsets:
+  telegram:
+    - web
+    - file
+    - memory
+    - todo
+    - cronjob
+    - clarify
+    - session_search
+    - skills
+
+tool_loop_guardrails:
+  enabled: true
+  max_consecutive_identical_calls: 3
+
+memory:
+  enabled: true
+
+max_concurrent_sessions: 2
+group_sessions_per_user: true
+
+telemetry:
+  enabled: false
+updates:
+  check: false
