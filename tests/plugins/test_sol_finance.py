@@ -393,3 +393,23 @@ def test_xero_callback_discards_tokens_for_other_orgs(monkeypatch):
     monkeypatch.setattr(common, "http_json", lambda m, u, **k: {"access_token": "a", "refresh_token": "r", "expires_in": 1800}
                         if "connect/token" in u else [{"tenantId": "t", "tenantName": "FinVerified, Inc."}])
     assert xero.handle_callback("code", st) is True and xero.org_name() == "FinVerified, Inc."
+
+
+def _b64(s):
+    import base64 as _b
+    return _b.urlsafe_b64encode(s.encode()).decode().rstrip("=")
+
+
+def test_gmail_body_nested_multipart_no_recursion():
+    from plugins.sol_finance import gmail
+    payload = {"mimeType": "multipart/mixed", "parts": [
+        {"mimeType": "multipart/alternative", "parts": [
+            {"mimeType": "text/html", "body": {"data": _b64("<b>x</b>")}},
+            {"mimeType": "text/plain", "body": {"data": _b64("hello")}}]}]}
+    assert gmail._body(payload) == "hello"
+
+
+def test_gmail_body_flat_and_empty():
+    from plugins.sol_finance import gmail
+    assert gmail._body({"mimeType": "text/plain", "body": {"data": _b64("flat")}}) == "flat"
+    assert gmail._body({"mimeType": "multipart/mixed", "parts": []}) == ""
