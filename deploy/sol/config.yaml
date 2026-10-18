@@ -117,3 +117,10 @@ session_reset:
   mode: idle
   idle_minutes: 120
   notify: false
+
+# Slack: send only the final answer, no "let me..." play-by-play messages.
+display:
+  platforms:
+    slack:
+      interim_assistant_messages: false
+      tool_progress: "off"
