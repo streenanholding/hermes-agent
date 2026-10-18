@@ -83,15 +83,16 @@ def _get(path: str) -> Any:
                             headers={"Authorization": "Bearer " + _access()})
 
 
-def _body(payload: Dict[str, Any]) -> str:
-    parts = [payload] + list(payload.get("parts") or [])
-    for p in parts:
-        if p.get("mimeType") == "text/plain" and p.get("body", {}).get("data"):
-            return base64.urlsafe_b64decode(p["body"]["data"] + "==").decode(errors="replace")
-        if p.get("parts"):
-            inner = _body(p)
-            if inner:
-                return inner
+def _body(payload: Dict[str, Any], _depth: int = 0) -> str:
+    """Return the first text/plain part, walking child parts only (never the payload itself)."""
+    if _depth > 20:
+        return ""
+    if payload.get("mimeType") == "text/plain" and payload.get("body", {}).get("data"):
+        return base64.urlsafe_b64decode(payload["body"]["data"] + "==").decode(errors="replace")
+    for p in payload.get("parts") or []:
+        inner = _body(p, _depth + 1)
+        if inner:
+            return inner
     return ""
 
 
