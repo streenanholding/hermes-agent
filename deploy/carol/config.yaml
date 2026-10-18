@@ -3,9 +3,10 @@
 # Reviewed like code. Credentials in Railway are the enforcement; if this file
 # and the credentials disagree, the credentials win.
 #
-# Phase 1: private Telegram line to Rick. Web research, her own files, memory,
-# todo, cron. No email, Slack, money, patient data, production, GitHub or Railway.
-# Phase 2 (carol@finverified.ai mailbox) is added by pull request, not by chat.
+# v1.3: private Telegram line to Rick; her own mailbox carol@finverified.ai (read,
+# search, draft, send — approved domains only, Rick and Nancy auto-copied, daily cap);
+# the Pay✓erified shared drive only. Web research, her own files, memory, todo, cron.
+# No Slack, money, patient data, production, GitHub or Railway.
 
 _config_version: 37
 
@@ -34,6 +35,18 @@ platform_toolsets:
     - clarify
     - session_search
     - skills
+    - carol_google   # Gmail (CAROL_EMAIL) + Pay✓erified drive; policy enforced in plugins/carol_google
+
+plugins:
+  enabled:
+    - carol_google
+
+# Read by plugins/carol_google (policy switches, never secrets).
+carol:
+  # Sending on (Rick, 18 Oct 2026). Approved domains: CAROL_SEND_DOMAINS in Railway.
+  # Always copied: CAROL_ALWAYS_CC. Set false to go back to drafts only.
+  allow_send: true
+  daily_send_cap: 40
 
 tool_loop_guardrails:
   enabled: true
