@@ -1,6 +1,7 @@
 # Hermes config for hermes-carly (Carly Finkle, Chief of Staff).
 # Seeded to $HERMES_HOME by docker/stage2-hook.sh when HERMES_AGENT_DEPLOY=carly.
-# Phase 1b: private Telegram and Slack DM lines to Rick only. No email or money tools yet.
+# Phase 2: private Telegram and Slack DM lines to Rick only. READ-ONLY Gmail and Calendar
+# for rick@finverified.ai (plugins/carly_google). No sending and no money tools.
 
 _config_version: 37
 
@@ -27,6 +28,7 @@ platform_toolsets:
     - clarify
     - session_search
     - skills
+    - carly_google   # read-only Gmail + Calendar; policy enforced in plugins/carly_google
   telegram:
     - web
     - file
@@ -36,6 +38,11 @@ platform_toolsets:
     - clarify
     - session_search
     - skills
+    - carly_google   # read-only Gmail + Calendar; policy enforced in plugins/carly_google
+
+plugins:
+  enabled:
+    - carly_google
 
 tool_loop_guardrails:
   enabled: true
