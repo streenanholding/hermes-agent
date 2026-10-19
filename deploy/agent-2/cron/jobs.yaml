@@ -1,0 +1,45 @@
+# Agent 2 scheduled jobs. Source of truth for what install.sh registers.
+# Every job is a no_agent script: Hermes runs it on schedule and posts its
+# stdout to the Slack home channel verbatim. Empty stdout = silent run.
+# No model is called, so these cost zero tokens.
+#
+# Times are in config.yaml `timezone`. Scripts live in $HERMES_HOME/scripts/
+# (copied there by install.sh); Hermes only runs scripts from that directory.
+# The agent cannot add or edit jobs (cronjob toolset disabled), so changing
+# this file by PR + re-running install.sh is the only way jobs change.
+
+jobs:
+  - name: agent2-budget-guard
+    schedule: "0 * * * *"            # hourly
+    script: budget_guard.py
+    deliver: slack
+    essential: true                  # runs in every budget state
+    purpose: Read the key's spend from LiteLLM, write state/budget.json, warn at 80%, announce stop at 100%.
+
+  - name: agent2-draft-check
+    schedule: "every 5m"
+    script: draft_check.py
+    deliver: slack
+    essential: true
+    purpose: Quality-gate pending drafts; the only path by which a draft reaches Slack.
+
+  - name: agent2-stale-check
+    schedule: "0 8 * * 1-5"          # weekdays 08:00
+    script: stale_check.py
+    deliver: slack
+    essential: true
+    purpose: Flag trackers with 5 business days of no movement; escalate to Rick at 10.
+
+  - name: agent2-tracker-rollup
+    schedule: "15 8 * * 1-5"         # weekdays 08:15
+    script: tracker_rollup.py
+    deliver: slack
+    essential: false                 # silent at warn and stop
+    purpose: Rewrite trackers/README.md and post a one-line-per-tracker summary.
+
+  - name: agent2-weekly-spend
+    schedule: "30 8 * * 1"           # Mondays 08:30
+    script: spend_report.py
+    deliver: slack
+    essential: true
+    purpose: Weekly Slack summary of spend by job class and Opus escalations.

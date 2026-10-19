@@ -1,0 +1,33 @@
+# One case-insensitive regex per line. A draft matching any line fails the check.
+# Commitments, guarantees and compliance claims are Rick's or Nancy's to make.
+# Change by PR only.
+
+# Commitments on fees, terms, signing, timelines
+\bwe (will|can|agree to) (sign|pay|accept|commit)\b
+\bwe('ve| have) agreed\b
+\bwe accept (your|the) (terms|pricing|fee)
+\bwe will (go live|launch|be live) (on|by)\b
+\bdeal\b.*\b(done|agreed|confirmed)\b
+\bconsider (this|it) (signed|agreed|approved)\b
+
+# Guarantees
+\bguarantee(d|s)?\b
+\bno risk\b
+\brisk[- ]free\b
+\b100% (compliant|accurate|secure)\b
+
+# Compliance / certification claims we haven't earned or that need counsel
+\b(hipaa|soc ?2|pci)[- ](certified|compliant|approved)\b
+\bfully compliant\b
+\bcms[- ](approved|certified|endorsed)\b
+\b(approved|endorsed|certified) by (cms|the payer|ada|onc)\b
+\bfda\b
+
+# Financing / UDAAP-sensitive language
+\bfree financing\b
+\bno credit check\b
+\bpre-?approved\b
+
+# Inventing relationships
+\b(our|a) (partner|partnership) with\b
+\bofficial (partner|vendor)\b
