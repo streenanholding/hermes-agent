@@ -1,0 +1,4 @@
+name: mail_watch
+version: 1.0.0
+description: "Instant inbox watcher for FinVerified agents. Every MAIL_WATCH_INTERVAL seconds (default 60) it asks Gmail, with no AI cost, whether a new unread email from an approved sender (MAIL_WATCH_SENDERS; default rick@finverified.ai, ncoy@finverified.ai) has arrived in the agent's own mailbox. For each one it starts a one-time job so the agent reads it, does what it asks, and replies with the actual answer. Uses the agent's existing Google connector (carol_google, carly_google, seraphine_google or sol_finance); nothing else."
+author: "FinVerified"
