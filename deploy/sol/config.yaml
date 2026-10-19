@@ -108,6 +108,7 @@ updates:
 platforms:
   slack:
     enabled: true
+    gateway_restart_notification: false
     extra:
       reply_in_thread: false
       dm_top_level_threads_as_sessions: false
