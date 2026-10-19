@@ -1,4 +1,0 @@
-name: carol_google
-version: 1.1.0
-description: "Carol (FinVerified PayVerified payer & connections lead): Gmail for one mailbox (CAROL_EMAIL) and the Pay✓erified shared drive (CAROL_DRIVE_ROOT_ID) via user OAuth. Sending gated by carol.allow_send, approved domains, auto-CC and a daily cap. No domain-wide delegation; policy enforced in code."
-author: "FinVerified"
