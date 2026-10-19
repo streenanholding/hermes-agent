@@ -36,9 +36,22 @@ platform_toolsets:
     - clarify        # ask before acting when unsure
     - session_search
     - skills
+    - carly_google   # Gmail, Calendar, Drive for CARLY_EMAIL only; policy enforced in plugins/carly_google
   # NOT enabled: terminal, process, code_execution, browser, delegation,
-  # image_gen, video_gen, tts, computer_use. Gmail, Calendar, Drive and Linear
-  # have no toolset in this repo for Carly yet (see PR description).
+  # image_gen, video_gen, tts, computer_use. Linear has no toolset for Carly yet.
+
+plugins:
+  enabled:
+    - carly_google
+
+# Read by plugins/carly_google (policy switches, never secrets). The mailbox comes
+# from the CARLY_EMAIL variable; Rick's calendar from CARLY_RICK_CALENDAR_ID (shared
+# with Carly); the Drive folder from CARLY_DRIVE_FOLDER_ID.
+carly:
+  timezone: America/New_York
+  # false = drafts only, invitations are not emailed. Rick turns this on in a
+  # reviewed change after the first 14 days (AGENTS.md section 5).
+  allow_send: false
 
 tool_loop_guardrails:
   enabled: true
