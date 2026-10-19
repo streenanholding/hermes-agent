@@ -71,6 +71,7 @@ plugins:
 # Capability allowlist. No terminal, browser, code execution, delegation, or media.
 platform_toolsets:
   slack:
+    - web
     - sol_finance    # Mercury/Stripe/Xero/AWS/Drive/Gmail/Slack tools with guards in code
     - file
     - memory
@@ -80,6 +81,7 @@ platform_toolsets:
     - session_search
     - skills
   telegram:
+    - web
     - sol_finance
     - file
     - memory
