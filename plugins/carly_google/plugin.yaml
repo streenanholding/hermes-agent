@@ -1,0 +1,4 @@
+name: carly_google
+version: 1.0.0
+description: "Carly (Chief of Staff): READ-ONLY Gmail and Google Calendar for one account (CARLY_GOOGLE_ACCOUNT) via user OAuth. No sending, drafting, deleting, labeling or event changes. Policy enforced in code."
+author: "FinVerified"
