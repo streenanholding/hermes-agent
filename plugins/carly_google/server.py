@@ -1,4 +1,8 @@
-"""Tiny HTTP listener on $PORT for the one-time Google sign-in (/google-connect, /google-callback) and /healthz."""
+"""Tiny HTTP listener on $PORT for the one-time Google sign-ins and /healthz.
+
+/google-connect: Rick's read-only connection. /google-own-connect: Carly's own mailbox.
+Both return to /google-callback (the own connection's state starts with "own.").
+"""
 
 from __future__ import annotations
 
@@ -38,9 +42,17 @@ class _H(BaseHTTPRequestHandler):
                 self.send_header("Cache-Control", "no-store")
                 self.end_headers()
                 return
+            if u.path == "/google-own-connect":
+                if auth.OWN.connected():
+                    return self._send(409, "Already connected.")
+                self.send_response(302)
+                self.send_header("Location", auth.OWN.authorize_url())  # fresh state every time
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                return
             if u.path == "/google-callback":
                 ok = auth.handle_callback(q.get("code", ""), q.get("state", ""))
-                return self._send(200 if ok else 400, "Google connected. You can close this tab." if ok else "Google connection failed. Sign in as the Carly account (Rick) and try again.")
+                return self._send(200 if ok else 400, "Google connected. You can close this tab." if ok else "Google connection failed. Sign in as the expected account (Rick, or carly@finverified.ai for the own-mailbox link), allow every permission, and try again.")
         except Exception:
             logger.exception("google callback failed")
             return self._send(500, "error")

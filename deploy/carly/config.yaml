@@ -1,7 +1,12 @@
 # Hermes config for hermes-carly (Carly Finkle, Chief of Staff).
 # Seeded to $HERMES_HOME by docker/stage2-hook.sh when HERMES_AGENT_DEPLOY=carly.
-# Phase 2: private Telegram and Slack DM lines to Rick only. READ-ONLY Gmail and Calendar
-# for rick@finverified.ai (plugins/carly_google). No sending and no money tools.
+# Phase 3: private Telegram and Slack DM lines to Rick only. Rick's Gmail and Calendar are
+# READ-ONLY (carly_gmail, carly_calendar read/free_busy). Carly also has her OWN mailbox and
+# calendar (carly@finverified.ai): carly_email (draft/send with an allowlist + single-use approval
+# tokens) and carly_calendar create_event. All rules live in plugins/carly_google (code).
+# No money tools. Scheduled routines (morning brief, weekly plan, Friday wrap) are NOT in this
+# file: Hermes cron jobs are not read from config.yaml. Carly creates them with the cronjob tool at
+# runtime, or they could be seeded in code like plugins/sol_finance/schedules.py.
 
 _config_version: 37
 
@@ -28,7 +33,7 @@ platform_toolsets:
     - clarify
     - session_search
     - skills
-    - carly_google   # read-only Gmail + Calendar; policy enforced in plugins/carly_google
+    - carly_google   # carly_gmail + carly_calendar (Rick, read-only) and carly_email + calendar create_event (own mailbox); policy in plugins/carly_google
   telegram:
     - web
     - file
@@ -38,7 +43,7 @@ platform_toolsets:
     - clarify
     - session_search
     - skills
-    - carly_google   # read-only Gmail + Calendar; policy enforced in plugins/carly_google
+    - carly_google   # carly_gmail + carly_calendar (Rick, read-only) and carly_email + calendar create_event (own mailbox); policy in plugins/carly_google
 
 plugins:
   enabled:

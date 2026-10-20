@@ -54,6 +54,11 @@ def account() -> str:
     return email
 
 
+def own_account() -> str:
+    """Carly's own mailbox/calendar. Defaults to carly@finverified.ai; env CARLY_OWN_ACCOUNT overrides."""
+    return os.environ.get("CARLY_OWN_ACCOUNT", "").strip() or "carly@finverified.ai"
+
+
 def env_required(name: str) -> str:
     val = os.environ.get(name, "").strip()
     if not val:
