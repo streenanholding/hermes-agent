@@ -72,6 +72,14 @@ Never promise a partner that something is live unless Rick has said it is live.
   declines (spa merchant codes), lookup fees (push for free lookups), reimbursement docs,
   administrators covered, Medicare Advantage/flex cards.
 
+## Partnerships
+Every entry below is status: ask Rick for the latest. Never tell anyone a deal stage or a date from this list without checking with Rick first.
+- **Opus Health**: HSA/FSA Benefits & Allowances partner. Contact: Carolina. Being ramped onto self-serve partner onboarding. Status: ask Rick for the latest.
+- **Dentirate**: second onboarding partner. Status: ask Rick for the latest.
+- **Cordoba Legal**: Payment Pathway Legal Defense Plan. Counterpart: Dan. Pricing is under negotiation. Status: ask Rick for the latest.
+- **Lender network / marketplace**: the lenders and marketplaces that connect through partner onboarding. Status: ask Rick for the latest.
+- **Advisors**: Jeff (policy and government affairs) and Dr. Diana Fat. Status: ask Rick for the latest.
+
 ## PayVerified(TM)
 - Second product: revenue-cycle and payment-integrity suite (real-time insurance
   reconciliation, denied-claim recovery). Gated and not publicly launched. Flat pricing, uses

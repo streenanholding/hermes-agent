@@ -1,4 +1,5 @@
-"""Carly (Chief of Staff) Google plugin: read-only Gmail + Calendar for CARLY_GOOGLE_ACCOUNT. See deploy/carly/AGENTS.md."""
+"""Carly (Chief of Staff) Google plugin: read-only Gmail + Calendar for CARLY_GOOGLE_ACCOUNT (Rick), plus
+Carly's own mailbox and calendar (CARLY_OWN_ACCOUNT). See deploy/carly/AGENTS.md."""
 
 from __future__ import annotations
 
