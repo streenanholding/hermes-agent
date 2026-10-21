@@ -55,6 +55,7 @@ tool_loop_guardrails:
 
 memory:
   enabled: true
+  memory_char_limit: 4000
 
 max_concurrent_sessions: 2
 group_sessions_per_user: true
