@@ -1,0 +1,31 @@
+# Complete list of cron jobs this agent may have. `python -m cron.reconcile` (run on every boot by
+# docker/stage2-hook.sh) creates/resets these and DELETES any job not listed. Times: America/New_York.
+# Change schedules by PR only. Reporting rules: deploy/common/REPORTING.md.
+jobs:
+- name: seraphine-betterstack-watch
+  schedule: '*/15 * * * *'
+  prompt: 'Check Better Stack (monitors, heartbeats, incidents). For every new or unresolved incident: acknowledge
+    it, diagnose it, and either apply a Tier 1 self-fix or post the Tier 2 proposal. Every incident ends resolved
+    or escalated; say so in one line.'
+- name: seraphine-platform-health
+  schedule: 0 * * * *
+  prompt: 'Hourly platform health: app.finverified.ai, api.finverified.ai, finverified.ai, Hermes agents on Railway,
+    LiteLLM, Postgres, Stripe webhook error rate. Apply Tier 1 fixes if something is down; otherwise end with a
+    one-line result.'
+- name: seraphine-pms-integration-check
+  schedule: 0 7 * * *
+  prompt: 'PMS/EMR integration check: Dentrix, Eaglesoft/Fuse and Open Dental connector status, sync errors and
+    stale connections. Logs only, never patient data.'
+- name: seraphine-expiry-ci-cost-check
+  schedule: 30 7 * * *
+  prompt: TLS certificate and DNS expiry within 30 days, GitHub CI status on main, and platform cost drift versus
+    last week. Retry a failed certificate or re-run failed CI if needed.
+- name: seraphine-weekly-it-report
+  schedule: 0 8 * * 1
+  prompt: 'Weekly IT report to Rick, copy Nancy: uptime per platform, incidents and how each ended, open risks,
+    cost per platform versus last week, one or two recommended improvements. Half a page.'
+  model: openrouter/anthropic/claude-sonnet-4.5
+- name: seraphine-budget-warn
+  schedule: 0 9 * * *
+  no_agent: true
+  script: budget_warn.py

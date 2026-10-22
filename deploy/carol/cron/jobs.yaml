@@ -1,0 +1,38 @@
+# Complete list of cron jobs this agent may have. `python -m cron.reconcile` (run on every boot by
+# docker/stage2-hook.sh) creates/resets these and DELETES any job not listed. Times: America/New_York.
+# Change schedules by PR only. Reporting rules: deploy/common/REPORTING.md.
+jobs:
+- name: carol-stale-check
+  schedule: 0 8 * * 1-5
+  prompt: 'Stale check: anything in the vendor, payer and enrollment trackers with no movement in 5 business days
+    (escalate at 10), unanswered vendor or payer messages, overdue next actions. Chase what you may chase.'
+- name: carol-enrollment-run
+  schedule: 0 9 * * 1-5
+  prompt: 'Advance each clinic''s payer enrollments (ERA, EFT, eligibility, claims): prepare packets from provider
+    facts only, follow up with payers, update the trackers. Never handle bank details or patient data.'
+- name: carol-connection-and-rfp-check
+  schedule: 0 10 * * 2
+  prompt: Check each clearinghouse and gateway connection status and the FV-RFP-2026-01 vendor trackers, Q&A log
+    and scoring. Send follow-ups to vendors, copying Rick and Nancy.
+- name: carol-vendor-negotiation
+  schedule: 0 10 * * 4
+  prompt: 'Negotiation round using the negotiation-playbook skill: pricing asks, counters and follow-ups to vendors,
+    always copying Rick and Nancy. Present volumes as forecasts. Commit to nothing.'
+- name: carol-weekly-report
+  schedule: 30 7 * * 5
+  prompt: 'Weekly PayVerified report to Rick and Nancy: partners, payers, enrollments, unit cost, quality, and three
+    ways to make PayVerified better or cheaper, each with numbers and sources.'
+  model: openrouter/anthropic/claude-sonnet-4.5
+- name: carol-monthly-cost-quality
+  schedule: 0 9 1 * *
+  prompt: Monthly PayVerified cost and quality report with the top three savings ideas and dollars saved (payverified-costs
+    skill).
+  model: openrouter/anthropic/claude-sonnet-4.5
+- name: carol-quarterly-market-check
+  schedule: 0 9 * 1,4,7,10 1
+  prompt: 'Quarterly market check (first Monday of the quarter): is anyone cheaper or better than our current partners?
+    Give rebid advice.'
+- name: carol-budget-warn
+  schedule: 0 9 * * *
+  no_agent: true
+  script: budget_warn.py
