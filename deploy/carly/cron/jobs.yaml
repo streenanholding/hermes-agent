@@ -1,0 +1,42 @@
+# Complete list of cron jobs this agent may have. `python -m cron.reconcile` (run on every boot by
+# docker/stage2-hook.sh) creates/resets these and DELETES any job not listed. Times: America/New_York.
+# Change schedules by PR only. Reporting rules: deploy/common/REPORTING.md.
+jobs:
+- name: carly-inbox-calendar-screen
+  schedule: 30 6 * * *
+  prompt: 'Screen Rick''s inbox and calendar (read-only, carly_gmail and carly_calendar). Sort: needs Rick, I can
+    handle, can wait. Flag conflicts, deadline traps and anything that looks like fraud. Draft replies as drafts
+    only; never send as Rick.'
+- name: carly-day-plan
+  schedule: 30 7 * * *
+  prompt: 'Build today''s plan from the screen: calendar with prep notes, late or at-risk items, next 14 days. Post
+    ONE line summarizing it to #agent-log. Anything that needs Rick''s decision goes to him in a single bundled
+    message.'
+- name: carly-open-request-sweep
+  schedule: 0 16 * * *
+  prompt: 'Follow-Up Tracker sweep: every request Rick made of a person or agent. People: reminder day 2, second
+    note day 5, tell Rick day 7. Agents and dev team: check after 24 hours, escalate after 48. Send the reminders
+    you are allowed to send.'
+- name: carly-protect-calendar
+  schedule: 0 18 * * *
+  prompt: 'Protect the Tue-Thu 10:00-2:00 ET meeting window and family dates on Rick''s calendar for the next 14
+    days: propose alternatives for anything that intrudes, never double-book, and block family dates. Ask Rick only
+    if a decision is needed.'
+- name: carly-partner-call-prep
+  schedule: 0 17 * * *
+  prompt: 'If Rick has an external partner call tomorrow, prepare the brief: who they are, the goal, history, open
+    items, questions to ask, and the one thing not to say. Otherwise end with a one-line result.'
+- name: carly-pms-vendor-connections
+  schedule: 0 9 * * 1
+  prompt: 'Drive the Dentrix and Eaglesoft/Fuse PMS vendor connections: current status, next step, owner and blocker
+    for each; send the follow-ups you are allowed to send and note what you are waiting on.'
+- name: carly-agreements-filing
+  schedule: 0 13 * * 5
+  prompt: 'With Sol, make sure every signed agreement is filed in Google Drive with a clear name and date. List
+    any missing from the agreement register and ask Sol for them. Then send Rick the weekly report: the week in
+    review, open requests and what is late.'
+  model: openrouter/anthropic/claude-sonnet-4.5
+- name: carly-budget-warn
+  schedule: 0 9 * * *
+  no_agent: true
+  script: budget_warn.py

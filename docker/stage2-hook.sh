@@ -441,17 +441,32 @@ if [ -n "${HERMES_AGENT_DEPLOY:-}" ]; then
         *)
             ov="$INSTALL_DIR/deploy/$HERMES_AGENT_DEPLOY"
             if [ -d "$ov" ]; then
-                for f in config.yaml SOUL.md AGENTS.md; do
+                for f in config.yaml SOUL.md; do
                     if [ -f "$ov/$f" ] && ! refuse_symlinked_path "overlay" "$HERMES_HOME/$f"; then
                         as_hermes cp "$ov/$f" "$HERMES_HOME/$f"
                     fi
                 done
+                # AGENTS.md: resolve shared includes (deploy/common/REPORTING.md).
+                if [ -f "$ov/AGENTS.md" ] && ! refuse_symlinked_path "overlay" "$HERMES_HOME/AGENTS.md"; then
+                    as_hermes "$INSTALL_DIR/.venv/bin/python" "$INSTALL_DIR/deploy/common/render_agents_md.py" "$ov/AGENTS.md" "$HERMES_HOME/AGENTS.md" \
+                        || echo "[stage2] Warning: could not render AGENTS.md for $HERMES_AGENT_DEPLOY"
+                fi
+                # Shared scripts (budget_warn.py) go beside the agent's own scripts.
+                if [ -d "$INSTALL_DIR/deploy/common/scripts" ] && ! refuse_symlinked_path "overlay" "$HERMES_HOME/scripts"; then
+                    as_hermes mkdir -p "$HERMES_HOME/scripts"
+                    as_hermes cp -R "$INSTALL_DIR/deploy/common/scripts/." "$HERMES_HOME/scripts/"
+                fi
                 for d in skills templates scripts hooks; do
                     if [ -d "$ov/$d" ] && ! refuse_symlinked_path "overlay" "$HERMES_HOME/$d"; then
                         as_hermes mkdir -p "$HERMES_HOME/$d"
                         as_hermes cp -R "$ov/$d/." "$HERMES_HOME/$d/"
                     fi
                 done
+                # Cron: the live store must match deploy/<agent>/cron/jobs.yaml (unlisted jobs are deleted).
+                if [ -f "$ov/cron/jobs.yaml" ]; then
+                    (cd "$INSTALL_DIR" && as_hermes "$INSTALL_DIR/.venv/bin/python" -m cron.reconcile "$ov/cron/jobs.yaml") \
+                        || echo "[stage2] Warning: cron reconcile failed for $HERMES_AGENT_DEPLOY"
+                fi
                 echo "[stage2] Applied deploy overlay: $HERMES_AGENT_DEPLOY"
             fi
             ;;

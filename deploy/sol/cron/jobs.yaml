@@ -1,0 +1,55 @@
+# Complete list of cron jobs this agent may have. `python -m cron.reconcile` (run on every boot by
+# docker/stage2-hook.sh) creates/resets these and DELETES any job not listed. Times: America/New_York.
+# Change schedules by PR only. Reporting rules: deploy/common/REPORTING.md.
+jobs:
+- name: sol-mercury-recon-check
+  schedule: 45 6 * * 1-5
+  prompt: 'Mercury reconciliation check: compare Mercury (sol_mercury) with Xero (sol_xero). Count unreconciled
+    items, list mismatches, and check the latest OnPay payroll journal against its Mercury debit. Record findings
+    in the weekly-report notes. Drafts and read-only only: no money movement, no posting, no reconciling. If nothing
+    needs doing, end with a one-line result.'
+- name: sol-xero-drafts
+  schedule: 0 8 * * 1-5
+  prompt: 'Categorize new bank transactions, bills and receipts as Xero DRAFTs (Status DRAFT only) and suggest bank
+    rules per the controller-cpa skill. File source documents in the right Drive folder. Drafts and read-only only:
+    no money movement, no posting, no reconciling. If nothing needs doing, end with a one-line result.'
+- name: sol-daily-budget-check
+  schedule: 30 6 * * *
+  no_agent: true
+  script: sol_daily_budget_check.py
+- name: sol-vendor-cost-review
+  schedule: 0 9 * * 1
+  prompt: 'Vendor cost optimization per the vendors-billing skill: upcoming renewals and cancel-by dates, unused
+    seats, cheaper plans, AWS cost drift (one cached Cost Explorer pull). Update the Vendor Register and list the
+    top savings with dollars. Drafts and read-only only: no money movement, no posting, no reconciling. If nothing
+    needs doing, end with a one-line result.'
+  model: openrouter/anthropic/claude-sonnet-4.5
+- name: sol-investor-paperwork-prep
+  schedule: 0 9 * * 3
+  prompt: 'Investor paperwork prep: refresh the cap-table view (sol_equity cap_table), prepare any needed proposals
+    with sol_equity propose (PENDING only, with reason and Drive link), and draft closing checklists and data-room
+    documents in Drive. Contact no investor. Drafts and read-only only: no money movement, no posting, no reconciling.
+    If nothing needs doing, end with a one-line result.'
+  model: openrouter/anthropic/claude-sonnet-4.5
+- name: sol-partner-comp-tracking
+  schedule: 0 9 * * 4
+  prompt: 'Channel-partner comp tracking: from Stripe, Xero and the partner agreements in Drive, update the tracker
+    of referrals, comp earned, comp paid and anything disputed. Never pay a partner. Drafts and read-only only:
+    no money movement, no posting, no reconciling. If nothing needs doing, end with a one-line result.'
+- name: sol-weekly-cfo-report-fri
+  schedule: 0 7 * * 5
+  prompt: 'Prepare the weekly CFO + controller report using templates/weekly-cfo-report.md. Pull Xero Reports/ProfitAndLoss,
+    Reports/BalanceSheet, Reports/BankSummary, Reports/AgedPayablesByContact and Reports/TrialBalance with sol_xero;
+    Mercury with sol_mercury; Stripe with sol_stripe; AWS (cached) with sol_aws; and sol_budget status. Lead with
+    the bottom line. Include: cash and runway; the week''s spend by vendor; the unreconciled items count; drafts
+    awaiting Rick''s approval; payroll journal vs Mercury; channel-partner comp; vendor savings found; investor
+    paperwork status; items needing decisions. Check all math and dates. Email it with sol_email_report to rick@finverified.ai
+    and ncoy@finverified.ai only. Drafts and read-only only: no money movement, no posting, no reconciling. If nothing
+    needs doing, end with a one-line result.'
+  model: openrouter/anthropic/claude-sonnet-4.5
+- name: sol-month-end-close
+  schedule: 0 7 5 * *
+  prompt: Month-end close package (drafts only) plus vendor optimization review for the month just ended, per the
+    controller-cpa and vendors-billing skills. Save to Drive 'FinVerified Finance' and mention it in the next Friday
+    report.
+  model: openrouter/anthropic/claude-sonnet-4.5

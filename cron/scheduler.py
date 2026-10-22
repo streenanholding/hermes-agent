@@ -506,6 +506,7 @@ from cron.jobs import (
     use_cron_store,
 )
 from cron.executions import create_execution, finish_execution, mark_execution_running
+from cron import circuit_breaker as _circuit_breaker
 
 # Sentinel: when a cron agent has nothing new to report, it can start its
 # response with this marker to suppress delivery.  Output is still saved
@@ -6354,6 +6355,7 @@ def _run_one_job_body(
         # deferred agent is still torn down. Otherwise the outer `except` would
         # swallow the error and leak the agent's subprocesses/clients (#10200).
         blocked_config = False
+        drift_skip = False
         side_effect_ownership_lost = False
         try:
             with _side_effect_fence() as owns_output:
@@ -6438,6 +6440,14 @@ def _run_one_job_body(
             # empty-response guard below mark the run as a soft failure.
             should_deliver = bool(deliver_content.strip())
             if blocked_config_silent or drift_skip_silent:
+                should_deliver = False
+            if (
+                not success
+                and not blocked_config
+                and not drift_skip
+                and _circuit_breaker.suppress_failure_post(job)
+            ):
+                # The breaker sends its own single "paused itself" alert.
                 should_deliver = False
             unresolved_origin = False
             # Cron silence suppression — see _is_cron_silence_response.  Replaces the
@@ -6552,6 +6562,15 @@ def _run_one_job_body(
         if blocked_config:
             mark_kwargs["status"] = "blocked_config"
         marked = mark_job_run(job["id"], success, error, **mark_kwargs)
+        if marked and not blocked_config and not drift_skip:
+            try:
+                from gateway import ops_alerts as _ops_alerts
+
+                _ops_alerts.log_job_result(job, success, error)
+            except Exception:
+                logger.debug("agent-log post failed", exc_info=True)
+            if not success:
+                _circuit_breaker.trip_if_needed(job["id"], error)
         if fire_owner is not None and not marked:
             finish_execution(
                 execution_id,
@@ -6599,6 +6618,7 @@ def _run_one_job_body(
             and not delivery_attempted
             and not isinstance(e, _FireClaimLostDuringSideEffect)
             and not _fire_claim_ownership_lost()
+            and not _circuit_breaker.suppress_failure_post(job)
         ):
             normalized_deliver = _normalize_deliver_value(
                 job.get("deliver", "local")
@@ -6632,7 +6652,8 @@ def _run_one_job_body(
                     mark_kwargs["expected_fire_owner"] = fire_owner
                 if isinstance(e, Exception):
                     mark_kwargs["delivery_error"] = delivery_error
-                mark_job_run(job["id"], False, _err_text, **mark_kwargs)
+                if mark_job_run(job["id"], False, _err_text, **mark_kwargs):
+                    _circuit_breaker.trip_if_needed(job["id"], _err_text)
         except Exception as record_err:
             # Never let bookkeeping mask the original interruption.
             logger.error(
@@ -6812,6 +6833,13 @@ def tick(
         if can_dispatch is not None and not can_dispatch():
             logger.debug("Cron dispatch paused while gateway drains existing work")
             return 0
+
+        try:
+            from gateway import ops_alerts as _ops_alerts
+
+            _ops_alerts.flush_pending()
+        except Exception:
+            logger.debug("ops alert flush failed", exc_info=True)
 
         # Dead-owner claim reclaim (#86721): execution rows carry their owner
         # pid + process start time, but recovery previously ran only at
