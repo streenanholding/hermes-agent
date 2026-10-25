@@ -288,10 +288,14 @@ def test_sol_config_matches_ruling():
     assert cfg["platform_toolsets"]["cron"] == cfg["platform_toolsets"]["slack"]  # FIN-1175
 
 
+SOL_TOOLS = {"sol_mercury", "sol_stripe", "sol_xero", "sol_aws", "sol_drive", "sol_gmail",
+             "sol_email_report", "sol_dm_rick", "sol_approval", "sol_budget", "sol_equity"}
+
+
 def test_tool_registry_has_no_money_movement_or_delete_tools():
     names = {t[0] for t in tools.TOOLS}
     assert not any(w in n for n in names for w in ("pay", "transfer", "delete", "send_money", "release"))
-    assert len(names) == 9
+    assert names == SOL_TOOLS
 
 
 def test_schedules_have_no_hourly_heartbeat():
@@ -300,14 +304,15 @@ def test_schedules_have_no_hourly_heartbeat():
         assert not j["schedule"].startswith(("* ", "0 * ", "*/"))
 
 
-def test_register_adds_nine_tools_in_sol_toolset(monkeypatch):
+def test_register_adds_sol_tools_in_sol_toolset(monkeypatch):
     import plugins.sol_finance as p
     monkeypatch.delenv("HERMES_AGENT_DEPLOY", raising=False)
     reg, hooks = [], []
     ctx = types.SimpleNamespace(register_tool=lambda **kw: reg.append(kw),
                                 register_hook=lambda name, cb: hooks.append(name))
     p.register(ctx)
-    assert len(reg) == 9 and {r["toolset"] for r in reg} == {"sol_finance"}
+    assert {r["name"] for r in reg} == SOL_TOOLS and len(reg) == len(SOL_TOOLS)
+    assert {r["toolset"] for r in reg} == {"sol_finance"}
     assert all(r["schema"]["name"] == r["name"] and callable(r["handler"]) for r in reg)
     assert hooks == ["pre_tool_call", "post_api_request"]
 
