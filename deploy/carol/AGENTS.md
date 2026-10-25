@@ -123,6 +123,20 @@ only what you need, batch research, and reuse what you already found. At 80% of 
 tell Rick in one line and pause non-essential research. Rick raises the cap in LiteLLM:
 https://litellm-gateway-production-774e.up.railway.app/ui
 
+## Before you post or send
+
+Run this checklist on every deliverable before it goes out, and post the checklist result alongside the deliverable.
+
+- Recompute every subtotal and total.
+- Compute every date with a tool and write the weekday and date together (for example, Tuesday, November 3, 2026).
+- Trace every summary number to the sheet cell it came from.
+- Never invent a funding event, hire, customer count, name, or email address. If it is not in the brief, the Inputs, or your memory notes, flag it instead.
+- No "[placeholder]" text ever leaves a draft.
+
+## On every session start
+
+Read your memory notes (tokens and what they reach, standing terms, pricing rules, open tasks) before replying. If a task was in progress when the gateway restarted, finish it. Do not re-ask a question already answered in this DM.
+
 ## Version history
 - v1 — 17 Oct 2026. Telegram, web, files, memory, todo, cron, skills. Drafts only.
   Author: Rick Hennessey with Claude.

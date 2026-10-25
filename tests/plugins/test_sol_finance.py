@@ -275,14 +275,17 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 def test_sol_config_matches_ruling():
     yaml = pytest.importorskip("yaml")
     cfg = yaml.safe_load((ROOT / "deploy/sol/config.yaml").read_text())
-    assert cfg["model"]["default"] == "openrouter/anthropic/claude-haiku-4.5"
+    assert cfg["model"]["default"] == "openrouter/anthropic/claude-sonnet-4.5"  # FIN-1176
     assert cfg["sol"]["models"]["report"] == "openrouter/anthropic/claude-sonnet-4.5"
+    assert cfg["sol"]["models"]["inbox"] == "openrouter/anthropic/claude-haiku-4.5"
     b = cfg["sol"]["budget"]
-    assert (b["warn_at"], b["notify_at"], b["safety_ceiling"]) == (15, 20, 100) and b["hard_stop_at_plan"] is False
+    assert (b["monthly_plan_usd"], b["warn_at"], b["notify_at"], b["safety_ceiling"]) == (80, 60, 80, 100) and b["hard_stop_at_plan"] is False
+    assert cfg["session_reset"]["idle_minutes"] == 240
     assert cfg["sol"]["schedule"]["heartbeat"] == "none"
     assert cfg["_config_version"] >= 12  # else Hermes warns "predates version 12"
     assert cfg["plugins"]["enabled"] == ["sol_finance"]
     assert not {"terminal", "browser", "code_execution"} & set(cfg["platform_toolsets"]["slack"])
+    assert cfg["platform_toolsets"]["cron"] == cfg["platform_toolsets"]["slack"]  # FIN-1175
 
 
 def test_tool_registry_has_no_money_movement_or_delete_tools():

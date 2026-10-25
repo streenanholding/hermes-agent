@@ -36,6 +36,17 @@ platform_toolsets:
     - session_search
     - skills
     - carol_google   # Gmail (CAROL_EMAIL) + Pay✓erified drive; policy enforced in plugins/carol_google
+  # cron: scheduled jobs get the same tools as Slack (FIN-1175)
+  cron:
+    - web
+    - file
+    - memory
+    - todo
+    - cronjob
+    - clarify
+    - session_search
+    - skills
+    - carol_google   # Gmail (CAROL_EMAIL) + Pay✓erified drive; policy enforced in plugins/carol_google
   telegram:
     - web
     - file
@@ -82,10 +93,10 @@ platforms:
     extra:
       reply_in_thread: false
       dm_top_level_threads_as_sessions: false
-# Token saver: start a fresh, small conversation after 2 hours of quiet.
+# Start a fresh conversation after 4 hours of quiet (FIN-1176; was 2 hours).
 session_reset:
   mode: idle
-  idle_minutes: 120
+  idle_minutes: 240
   notify: false
 # Slack: send only the final answer, no play-by-play messages.
 display:
