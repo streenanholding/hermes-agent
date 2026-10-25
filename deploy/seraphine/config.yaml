@@ -14,11 +14,10 @@ model:
   # api_key comes from OPENAI_API_KEY in the Railway environment — a LiteLLM
   # virtual key, never a raw provider key.
 
-  # Cheap by default. "seraphine-fast" and "seraphine-strong" are model
-  # ALIASES defined inside LiteLLM, so the real model behind each can be
-  # swapped in the LiteLLM UI without touching this service. AGENTS.md says
-  # when to escalate to strong.
-  default: "seraphine-fast"
+  # FIN-1176: Sonnet 4.5 by default. The LiteLLM key must allow this model
+  # (it previously allowed only the "seraphine-fast" / "seraphine-strong"
+  # aliases defined inside LiteLLM).
+  default: "openrouter/anthropic/claude-sonnet-4.5"   # FIN-1176 (was alias "seraphine-fast")
 
   # Keep responses bounded. Slack is the surface; nobody wants 8k tokens.
   max_tokens: 2048
@@ -29,6 +28,16 @@ model:
 # Not present here = not available to Seraphine on Slack.
 platform_toolsets:
   slack:
+    - web            # web_search, web_extract — read vendor pages
+    - file           # read_file, write_file, patch, search_files — her trackers only, on her volume
+    - memory         # durable notes
+    - todo           # working list per task
+    - cronjob        # the daily staleness check
+    - clarify        # ask before acting when unsure
+    - session_search # find her own prior work
+    - skills         # read-only skill library
+  # cron: scheduled jobs get the same tools as Slack (FIN-1175)
+  cron:
     - web            # web_search, web_extract — read vendor pages
     - file           # read_file, write_file, patch, search_files — her trackers only, on her volume
     - memory         # durable notes
