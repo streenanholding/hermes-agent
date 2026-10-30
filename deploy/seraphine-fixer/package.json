@@ -1,0 +1,11 @@
+{
+  "name": "seraphine-fixer",
+  "private": true,
+  "type": "module",
+  "description": "Seraphine Auto-Fixer: Better Stack incident webhook, patrol, repair and reports (FIN-1231).",
+  "scripts": {
+    "start": "bun src/main.ts",
+    "test": "bun test",
+    "build": "bun build src/main.ts --target bun --outfile dist/fixer.js"
+  }
+}
