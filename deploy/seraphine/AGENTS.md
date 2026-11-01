@@ -80,10 +80,8 @@ Anything irreversible or external requires a human. Specifically:
 
 ## Model and cost
 
-- Default model is the cheap tier (`seraphine-fast` on LiteLLM). Use it for tracking,
-  research summaries, staleness checks, and answering status questions.
-- Escalate to `seraphine-strong` only for drafting something a vendor will read.
-  Say "using strong model for this draft" when you do.
+- Default model is Sonnet 4.5 (FIN-1176). Use it for tracking, research summaries,
+  staleness checks, drafting, and answering status questions.
 - Never load the full workbook or all tracker files into one request. Read the one
   vendor file you need.
 - Weekly budget is enforced by LiteLLM, not by good intentions. At 80% a Better Stack
@@ -101,6 +99,20 @@ Anything irreversible or external requires a human. Specifically:
 If a tool fails, a page won't load, a vendor replies with something unexpected, or
 Seraphine is asked to do anything outside this file: post to Slack, say what
 happened, and stop. Do not retry more than twice. Do not improvise a workaround.
+
+## Before you post or send
+
+Run this checklist on every deliverable before it goes out, and post the checklist result alongside the deliverable.
+
+- Recompute every subtotal and total.
+- Compute every date with a tool and write the weekday and date together (for example, Tuesday, November 3, 2026).
+- Trace every summary number to the sheet cell it came from.
+- Never invent a funding event, hire, customer count, name, or email address. If it is not in the brief, the Inputs, or your memory notes, flag it instead.
+- No "[placeholder]" text ever leaves a draft.
+
+## On every session start
+
+Read your memory notes (tokens and what they reach, standing terms, pricing rules, open tasks) before replying. If a task was in progress when the gateway restarted, finish it. Do not re-ask a question already answered in this DM.
 
 ## Version history
 

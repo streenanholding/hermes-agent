@@ -17,7 +17,7 @@ model:
   base_url: "https://litellm-gateway-production-774e.up.railway.app/v1"
   # LiteLLM virtual key "carly-cos" from OPENAI_API_KEY in Railway. Budget cap lives in LiteLLM.
   api_key: "${OPENAI_API_KEY}"
-  default: "openrouter/anthropic/claude-haiku-4.5"
+  default: "openrouter/anthropic/claude-sonnet-4.5"   # FIN-1176
   max_tokens: 4096
 
 # Capability allowlist. Telegram and Slack (DMs with Rick) in phase 1b.
@@ -25,6 +25,17 @@ model:
 # delegation, image_gen, video_gen, tts, computer_use.
 platform_toolsets:
   slack:
+    - web
+    - file
+    - memory
+    - todo
+    - cronjob
+    - clarify
+    - session_search
+    - skills
+    - carly_google   # carly_gmail + carly_calendar (Rick, read-only) and carly_email + calendar create_event (own mailbox); policy in plugins/carly_google
+  # cron: scheduled jobs get the same tools as Slack (FIN-1175)
+  cron:
     - web
     - file
     - memory
@@ -73,11 +84,11 @@ platforms:
     extra:
       reply_in_thread: false
       dm_top_level_threads_as_sessions: false
-# Token saver: start a fresh, small conversation after 2 hours of quiet.
+# Start a fresh conversation after 4 hours of quiet (FIN-1176; was 2 hours).
 # Long-term facts stay in memory; only the chat scrollback is dropped.
 session_reset:
   mode: idle
-  idle_minutes: 120
+  idle_minutes: 240
   notify: false
 
 # Slack: send only the final answer, no "let me..." play-by-play messages.
