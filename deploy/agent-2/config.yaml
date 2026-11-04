@@ -1,4 +1,4 @@
-# Hermes config for hermes-agent-2 (v1, dark build: connections & enrollment)
+# Hermes config for hermes-agent-2 — Carol Remly, Director of PayVerified (v2)
 # Lives at $HERMES_HOME/config.yaml on the Railway volume (HERMES_HOME=/opt/data).
 # install.sh copies it there. Edit this file by PR, never on the volume.
 #
@@ -115,6 +115,16 @@ group_sessions_per_user: true
 
 # ── No MCP servers in v1 ───────────────────────────────────────────────────
 # mcp_servers: {}
+
+# ── Carol's mailbox policy (carol_google plugin) ──────────────────────────
+# v2 (Rick, 3 Nov 2026): Carol may send, but every email to anyone outside
+# finverified.ai must be reviewed by Rick first (he replies SEND to the review
+# email). The gate is enforced in carol_google/gmail.py. Turning require_review
+# off is a reviewed PR, never a runtime change.
+carol:
+  allow_send: true
+  require_review: true
+  daily_send_cap: 40
 
 # ── Telemetry off ──────────────────────────────────────────────────────────
 telemetry:

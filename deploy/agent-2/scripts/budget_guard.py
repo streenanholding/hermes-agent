@@ -75,7 +75,7 @@ def main() -> int:
         "max_budget_usd": cap,
         "budget_reset_at": reset_at,
         "checked_at": c.now_utc().isoformat(),
-    }, indent=2) + "\n")
+    }, indent=2) + "\n", encoding="utf-8")
     c.log_spend("budget_guard", usd=0.0, key_spend_usd=round(spend, 4),
                 key_max_budget_usd=cap, pct=round(pct, 1), model_spend=model_spend)
 

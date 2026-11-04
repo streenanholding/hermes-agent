@@ -79,7 +79,7 @@ def budget_state() -> str:
     """'ok' | 'warn' | 'stop'. Missing or unreadable file reads as 'ok' so a
     fresh volume still runs; the budget guard writes it within the hour."""
     try:
-        return json.loads(BUDGET_FILE.read_text()).get("state", "ok")
+        return json.loads(BUDGET_FILE.read_text(encoding="utf-8")).get("state", "ok")
     except (OSError, ValueError):
         return "ok"
 
