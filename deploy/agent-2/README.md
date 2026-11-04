@@ -5,7 +5,8 @@ Pattern: `deploy/seraphine/`.
 
 | File | What |
 |---|---|
-| `CAPABILITIES.md` | The capability contract. Installed as `/opt/data/AGENTS.md` so Hermes loads it. |
+| `CAPABILITIES.md` | The capability contract. Installed (with `mandates/*.md` appended) as `/opt/data/AGENTS.md` so Hermes loads it. |
+| `mandates/` | Carol's three mandates: PayVerified strategy, payer connections, competitive landscape |
 | `SOUL.md` | Identity. Installed as `/opt/data/SOUL.md`. |
 | `config.yaml` | Model routing, prompt caching, toolset allowlist, delegation, cron policy |
 | `cron/jobs.yaml` | The five scheduled jobs, all `no_agent` scripts |
