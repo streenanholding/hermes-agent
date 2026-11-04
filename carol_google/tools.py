@@ -67,7 +67,7 @@ def h_drive(args, **_):
     if a == "search":
         return _run(lambda: drive.search(*_need(args, "text")))
     if a == "read":
-        return _run(lambda: drive.read_text(*_need(args, "file_id")))
+        return _run(lambda: drive.read_text(*_need(args, "file_id")))  # windows-footgun: ok (Drive API call, not a file read)
     if a == "create_folder":
         return _run(lambda: drive.create_folder(*_need(args, "name", "parent_id")))
     if a == "create_file":
