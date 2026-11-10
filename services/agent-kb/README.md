@@ -30,8 +30,8 @@ Content never goes in this repo, which is public.
 
 | Who | Token | Can do |
 |---|---|---|
-| Each agent | its own token in `KB_AGENT_TOKENS` | `POST /v1/search` only. Sees documents tagged with its own name or `all`. |
-| Rick | `KB_ADMIN_TOKEN` | Load, retire, list, stats. |
+| Each agent | its own `KB_TOKEN_<AGENT>` | `POST /v1/search` only. Sees documents tagged with its own name or `all`. |
+| Rick | the Drive folder (and optional `KB_ADMIN_TOKEN`) | Add, edit, remove documents. |
 
 An agent's audience comes from its token on the server, so an agent cannot ask for
 another agent's documents.
