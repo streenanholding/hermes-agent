@@ -36,6 +36,18 @@ MAX_DOC_CHARS = 400_000
 MIN_SCORE = float(os.environ.get("KB_MIN_SCORE", "0.30"))
 
 
+def _env_agent_tokens() -> Dict[str, str]:
+    """Per-agent tokens from KB_TOKEN_SOL, KB_TOKEN_CARLY, ... (preferred), plus legacy KB_AGENT_TOKENS JSON."""
+    out = _parse_agent_tokens(os.environ.get("KB_AGENT_TOKENS", ""))
+    for agent in AGENTS:
+        tok = os.environ.get(f"KB_TOKEN_{agent.upper()}", "").strip()
+        if tok:
+            if len(tok) < 32:
+                raise ValueError(f"KB_TOKEN_{agent.upper()} must be at least 32 characters")
+            out[tok] = agent
+    return out
+
+
 def _parse_agent_tokens(raw: str) -> Dict[str, str]:
     """KB_AGENT_TOKENS = JSON {"sol": "<token>", "carly": "<token>", ...}. Returns token -> agent."""
     if not raw:
@@ -82,19 +94,37 @@ class SearchIn(BaseModel):
 
 
 def create_app(store=None, embedder: Optional[Embedder] = None, agent_tokens: Optional[Dict[str, str]] = None,
-               admin_token: Optional[str] = None) -> FastAPI:
+               admin_token: Optional[str] = None, start_sync: bool = False) -> FastAPI:
     if store is None:
         dsn = os.environ.get("DATABASE_URL")
         store = PgStore(dsn) if dsn else MemoryStore()
     embedder = embedder or LocalEmbedder()
-    tokens = agent_tokens if agent_tokens is not None else _parse_agent_tokens(os.environ.get("KB_AGENT_TOKENS", ""))
+    tokens = agent_tokens if agent_tokens is not None else _env_agent_tokens()
     admin = admin_token if admin_token is not None else os.environ.get("KB_ADMIN_TOKEN", "")
     if admin and len(admin) < 32:
         raise ValueError("KB_ADMIN_TOKEN must be at least 32 characters")
 
+    canary_q = os.environ.get("KB_CANARY_QUERY", "what is our annual price per location")
+
+    def _canary(_summary: dict) -> None:
+        """Log which document answers a known question, so a deploy can be checked from logs alone."""
+        try:
+            hits = store.search(embedder.embed_query(canary_q), list(AUDIENCES), 1)
+            log.info("canary: %r -> %s", canary_q,
+                     f"{hits[0].title} (score {hits[0].score:.2f})" if hits else "no result")
+        except Exception:
+            log.exception("canary failed")
+
     @asynccontextmanager
     async def lifespan(_app):
         store.init()
+        log.info("agent-kb ready: agents with access = %s", sorted(set(tokens.values())))
+        if start_sync:
+            from . import drive_sync
+
+            sync = drive_sync.from_env(store, embedder, AUDIENCES, on_done=_canary)
+            if sync:
+                sync.start()
         yield
 
     app = FastAPI(title="agent-kb", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
@@ -180,7 +210,7 @@ def main() -> None:  # pragma: no cover - container entrypoint
     import uvicorn
 
     logging.basicConfig(level=logging.INFO)
-    uvicorn.run(create_app(), host="::", port=int(os.environ.get("PORT", "8080")), access_log=False)
+    uvicorn.run(create_app(start_sync=True), host="::", port=int(os.environ.get("PORT", "8080")), access_log=False)
 
 
 if __name__ == "__main__":  # pragma: no cover

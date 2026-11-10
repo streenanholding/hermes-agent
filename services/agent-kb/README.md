@@ -14,10 +14,17 @@ source in their answers.
 - No PHI: every document is checked on load, and anything that looks like patient data
   or a card/ID number is rejected.
 
-## Content never goes in this repo
+## Adding and removing documents (Google Drive)
 
-This repository is public. Documents are loaded into the database through the admin
-API only. Keep the source files in a private place.
+Content lives in the **Agent Knowledge Library** folder in the *FinVerified Finance*
+shared drive. Each subfolder name is who can read it: `all`, `sol`, `carly`,
+`seraphine`, `carol`. Google Docs, `.md` and `.txt` files are picked up.
+
+- Add or edit a doc: it is loaded within 5 minutes.
+- Delete it or move it out: it is retired within 5 minutes.
+- A doc that looks like it contains patient data is skipped (see the logs).
+
+Content never goes in this repo, which is public.
 
 ## Access
 
@@ -32,17 +39,19 @@ another agent's documents.
 ## Railway variables (names only)
 
 - `DATABASE_URL`: reference to `pgvector-db` (Railway reference variables).
-- `KB_AGENT_TOKENS`: JSON, for example `{"sol": "<token>", "carly": "<token>", "seraphine": "<token>"}`. Each token is at least 32 characters.
-- `KB_ADMIN_TOKEN`: at least 32 characters.
+- `KB_TOKEN_SOL`, `KB_TOKEN_CARLY`, `KB_TOKEN_SERAPHINE` (optional `KB_TOKEN_CAROL`): one random value per agent, at least 32 characters. Set by Rick; never pasted anywhere else.
+- `KB_GOOGLE_SA_JSON`: reference to Sol's service account (read-only scope is used).
+- `KB_DRIVE_FOLDER_ID`: the Agent Knowledge Library folder.
+- `KB_ADMIN_TOKEN` (optional): enables the admin API for scripted loads.
 - `KB_MIN_SCORE` (optional, default 0.30).
 
 On each agent service:
 - `AGENT_KB_URL=http://agent-kb.railway.internal:8080`
-- `AGENT_KB_TOKEN=<that agent's token>`
+- `AGENT_KB_TOKEN=${{agent-kb.KB_TOKEN_<AGENT>}}` (a Railway reference, so the value is typed once).
 
 The `kb_search` tool stays hidden until both are set.
 
-## Loading documents
+## Scripted loading (optional, needs KB_ADMIN_TOKEN)
 
 ```
 export KB_URL=<agent-kb URL> KB_ADMIN_TOKEN=<admin token>

@@ -20,7 +20,7 @@ jobs:
       - name: Service tests
         working-directory: services/agent-kb
         run: |
-          pip install fastapi==0.115.6 pydantic==2.10.4 httpx pytest
+          pip install fastapi==0.115.6 pydantic==2.10.4 httpx pytest cryptography
           python -m pytest -q
       - name: Plugin tests
         run: |
