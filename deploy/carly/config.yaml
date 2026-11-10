@@ -34,6 +34,7 @@ platform_toolsets:
     - session_search
     - skills
     - carly_google   # carly_gmail + carly_calendar (Rick, read-only) and carly_email + calendar create_event (own mailbox); policy in plugins/carly_google
+    - agent_kb       # kb_search: read-only company knowledge library with citations (FIN-1413)
   telegram:
     - web
     - file
@@ -44,10 +45,12 @@ platform_toolsets:
     - session_search
     - skills
     - carly_google   # carly_gmail + carly_calendar (Rick, read-only) and carly_email + calendar create_event (own mailbox); policy in plugins/carly_google
+    - agent_kb       # kb_search: read-only company knowledge library with citations (FIN-1413)
 
 plugins:
   enabled:
     - carly_google
+    - agent_kb
 
 tool_loop_guardrails:
   enabled: true

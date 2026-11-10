@@ -1,0 +1,4 @@
+name: agent_kb
+version: 1.0.0
+description: "FinVerified agent knowledge library (FIN-1413): read-only kb_search over approved company documents, with citations. Audience is fixed by the agent's token on the server."
+author: "FinVerified"

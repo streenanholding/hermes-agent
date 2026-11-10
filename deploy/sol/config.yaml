@@ -67,12 +67,14 @@ sol:
 plugins:
   enabled:
     - sol_finance
+    - agent_kb
 
 # Capability allowlist. No terminal, browser, code execution, delegation, or media.
 platform_toolsets:
   slack:
     - web
     - sol_finance    # Mercury/Stripe/Xero/AWS/Drive/Gmail/Slack tools with guards in code
+    - agent_kb       # kb_search: read-only company knowledge library with citations (FIN-1413)
     - file
     - memory
     - todo
@@ -83,6 +85,7 @@ platform_toolsets:
   telegram:
     - web
     - sol_finance
+    - agent_kb       # kb_search: read-only company knowledge library with citations (FIN-1413)
     - file
     - memory
     - todo
