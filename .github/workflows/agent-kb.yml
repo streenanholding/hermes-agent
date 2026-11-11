@@ -1,0 +1,28 @@
+name: agent-kb
+
+on:
+  pull_request:
+    paths: ["services/agent-kb/**", "plugins/agent_kb/**", "tests/plugins/test_agent_kb_plugin.py"]
+  push:
+    paths: ["services/agent-kb/**", "plugins/agent_kb/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Service tests
+        working-directory: services/agent-kb
+        run: |
+          pip install fastapi==0.115.6 pydantic==2.10.4 httpx pytest cryptography
+          python -m pytest -q
+      - name: Plugin tests
+        run: |
+          pip install pytest pyyaml
+          python -m pytest -q -p no:cacheprovider tests/plugins/test_agent_kb_plugin.py --noconftest
