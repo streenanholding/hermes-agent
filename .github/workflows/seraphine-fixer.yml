@@ -1,0 +1,39 @@
+name: Seraphine fixer
+
+# Unit tests for the seraphine-fixer service (deploy/seraphine-fixer).
+# Every decision path is covered: down/up/flapping, rate limits, ack only
+# when healthy, the never-list, the rulebook, the AI cache and cap, and the
+# scrubber. The service deploys from main only after Rick merges.
+
+on:
+  pull_request:
+    paths:
+      - "deploy/seraphine-fixer/**"
+      - ".github/workflows/seraphine-fixer.yml"
+  push:
+    branches: [main]
+    paths:
+      - "deploy/seraphine-fixer/**"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Fixer unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: deploy/seraphine-fixer
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - name: Install Bun 1.1.38
+        run: npm install -g bun@1.1.38
+      - name: Unit tests
+        run: bun test
+      - name: Bundle builds
+        run: bun build src/main.ts --target bun --outfile /tmp/fixer.js
