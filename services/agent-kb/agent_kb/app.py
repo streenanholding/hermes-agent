@@ -209,8 +209,26 @@ def create_app(store=None, embedder: Optional[Embedder] = None, agent_tokens: Op
 def main() -> None:  # pragma: no cover - container entrypoint
     import uvicorn
 
+    import socket
+
     logging.basicConfig(level=logging.INFO)
-    uvicorn.run(create_app(start_sync=True), host="::", port=int(os.environ.get("PORT", "8080")), access_log=False)
+    # One dual-stack socket: IPv6 for Railway private networking (agent-kb.railway.internal)
+    # and IPv4 for Railway's healthcheck. Binding "::" alone can be IPv6-only in the container.
+    port = int(os.environ.get("PORT", "8080"))
+    try:
+        sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+        where = f"[::]:{port} (IPv4 + IPv6)"
+        addr = ("::", port)
+    except OSError:  # host without IPv6
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        where, addr = f"0.0.0.0:{port} (IPv4 only)", ("0.0.0.0", port)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(addr)
+    sock.listen(128)
+    sock.set_inheritable(True)
+    log.info("listening on %s", where)
+    uvicorn.run(create_app(start_sync=True), fd=sock.fileno(), access_log=False)
 
 
 if __name__ == "__main__":  # pragma: no cover
