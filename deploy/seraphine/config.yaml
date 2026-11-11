@@ -1,9 +1,11 @@
-# Hermes config for hermes-seraphine (v1 — partnership coordinator)
+# Hermes config for hermes-seraphine (v2 — Head of IT & Services).
 # Lives at $HERMES_HOME/config.yaml on the Railway volume.
 #
 # Everything about what Seraphine CAN do is decided here and by the
 # credentials in her Railway environment. AGENTS.md states the intent;
 # this file and the env enforce it.
+
+_config_version: 37   # schema version this file is written for (skips legacy migration)
 
 model:
   # All inference goes through LiteLLM. No direct provider key exists in
@@ -11,13 +13,18 @@ model:
   # allowed-model list, so the cap is enforced upstream of the agent.
   provider: "custom"
   base_url: "https://litellm-gateway-production-774e.up.railway.app/v1"
-  # api_key comes from OPENAI_API_KEY in the Railway environment — a LiteLLM
-  # virtual key, never a raw provider key.
+  # LiteLLM virtual key from OPENAI_API_KEY in Railway, never a raw provider
+  # key. It must be referenced explicitly: for non-openai.com hosts Hermes
+  # ignores OPENAI_API_KEY (#28660) and would send the "no-key-required"
+  # placeholder, which LiteLLM rejects (401).
+  api_key: "${OPENAI_API_KEY}"
 
   # Cheap by default. "seraphine-fast" and "seraphine-strong" are model
   # ALIASES defined inside LiteLLM, so the real model behind each can be
   # swapped in the LiteLLM UI without touching this service. AGENTS.md says
-  # when to escalate to strong.
+  # when to escalate to strong. Mapping per AGENTS.md section 11:
+  #   seraphine-fast = anthropic/claude-haiku-5-5 (routine checks, log reading, tracking)
+  #   seraphine-strong = anthropic/claude-sonnet-5-5 (diagnosis, write-ups)
   default: "seraphine-fast"
 
   # Keep responses bounded. Slack is the surface; nobody wants 8k tokens.
@@ -37,8 +44,13 @@ platform_toolsets:
     - clarify        # ask before acting when unsure
     - session_search # find her own prior work
     - skills         # read-only skill library
+    - agent_kb       # kb_search: read-only company knowledge library with citations (FIN-1413)
 
   # No other platform is enabled. Telegram is intentionally absent in v1.
+
+plugins:
+  enabled:
+    - agent_kb
 
 # ── Explicit denials (belt and braces — these are not in the list above,
 #    but stating them makes the intent unmissable in review) ───────────────
@@ -69,3 +81,25 @@ telemetry:
   enabled: false
 updates:
   check: false
+
+# Slack: reply right in the DM (no threads), one running conversation per DM.
+platforms:
+  slack:
+    enabled: true
+    gateway_restart_notification: false
+    extra:
+      reply_in_thread: false
+      dm_top_level_threads_as_sessions: false
+# Token saver: start a fresh, small conversation after 2 hours of quiet.
+# Long-term facts stay in memory; only the chat scrollback is dropped.
+session_reset:
+  mode: idle
+  idle_minutes: 120
+  notify: false
+
+# Slack: send only the final answer, no "let me..." play-by-play messages.
+display:
+  platforms:
+    slack:
+      interim_assistant_messages: false
+      tool_progress: "off"
