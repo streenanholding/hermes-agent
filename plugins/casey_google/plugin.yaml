@@ -1,0 +1,4 @@
+name: casey_google
+version: 1.0.0
+description: "Casey (Partner & Customer Success): her OWN mailbox and calendar (CASEY_OWN_ACCOUNT, default casey@finverified.ai) via one user OAuth connection. Send/reply with an allowlist (team + people who exist in Attio with a FinVerified role), single-use approval tokens for anyone else, a CAN-SPAM footer on every email, an unsubscribe list, a 72-hour cap and 8 PM-8 AM ET quiet hours on proactive email, and a supervised mode. Calendar: events with Meet links on her own calendar, Mon-Fri 8 AM-8 PM ET. Nothing here reads or writes any other mailbox. Policy enforced in code."
+author: "FinVerified"
