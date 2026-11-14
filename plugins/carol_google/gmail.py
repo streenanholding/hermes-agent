@@ -1,9 +1,10 @@
 """Gmail for CAROL_EMAIL only (gmail.modify).
 
 Reads return message text marked untrusted. Drafts are always allowed. Sending needs
-``carol.allow_send: true`` in config.yaml, and then only to allowed domains
-(CAROL_SEND_DOMAINS + finverified.ai), always with CAROL_ALWAYS_CC copied, and under a
-daily cap. Attachments come only from the Pay✓erified drive. No delete, trash or forward.
+``carol.allow_send: true`` in config.yaml. With ``carol.send_mode: allowlist`` (default) only allowed domains
+(CAROL_SEND_DOMAINS + finverified.ai) are reachable; with ``carol.send_mode: open`` (Doctrine
+v1.2) any domain is reachable except CAROL_BLOCKED_DOMAINS and press/media/support mailboxes.
+Either way CAROL_ALWAYS_CC is copied on external mail and the daily cap applies. Attachments come only from the Pay✓erified drive. No delete, trash or forward.
 """
 
 from __future__ import annotations
@@ -100,16 +101,32 @@ def create_draft(to: str, subject: str, body: str, cc: Optional[str] = None, thr
     return {"draft_id": d.get("id"), "cc": full_cc, "attachments": names, "status": "draft saved, not sent"}
 
 
+_NEVER_LOCALPARTS = {"press", "media", "news", "newsroom", "pr", "support", "help", "info", "customerservice", "customer.service", "noreply", "no-reply"}
+
+
 def _check_send(draft_id: str) -> List[str]:
     d = _get(f"drafts/{draft_id}?format=metadata")
     h = _hdr(d.get("message", {}))
     rcpts = _addrs(h.get("to"), h.get("cc"), h.get("bcc"))
     if not rcpts:
         raise common.PolicyError("draft has no recipients")
-    allowed = set(common.env_list("CAROL_SEND_DOMAINS")) | {"finverified.ai"}
-    bad = [a for a in rcpts if a.rsplit("@", 1)[-1] not in allowed]
-    if bad:
-        raise common.PolicyError("Not sent: " + ", ".join(bad) + " is outside the approved domains. Ask Rick to add the domain in Railway (CAROL_SEND_DOMAINS).")
+    cfg = common.carol_config()
+    if cfg.get("send_mode", "allowlist") == "open":
+        # Doctrine v1.2 (Rick, Nov 14 2026): Carol runs payer and government onboarding end to
+        # end, so any payer/program domain is reachable. A blocklist still applies, and press,
+        # media and support mailboxes are never a valid recipient (Doctrine standing orders).
+        blocked = set(common.env_list("CAROL_BLOCKED_DOMAINS"))
+        bad = [a for a in rcpts if a.rsplit("@", 1)[-1] in blocked]
+        if bad:
+            raise common.PolicyError("Not sent: " + ", ".join(bad) + " is on the blocked domain list (CAROL_BLOCKED_DOMAINS).")
+        press = [a for a in rcpts if a.split("@", 1)[0] in _NEVER_LOCALPARTS]
+        if press:
+            raise common.PolicyError("Not sent: " + ", ".join(press) + " is a press, media or support mailbox. Payer outreach goes to EDI, trading-partner, provider-relations, SIU or interoperability contacts only.")
+    else:
+        allowed = set(common.env_list("CAROL_SEND_DOMAINS")) | {"finverified.ai"}
+        bad = [a for a in rcpts if a.rsplit("@", 1)[-1] not in allowed]
+        if bad:
+            raise common.PolicyError("Not sent: " + ", ".join(bad) + " is outside the approved domains. Ask Rick to add the domain in Railway (CAROL_SEND_DOMAINS), or set carol.send_mode: open in a reviewed change.")
     external = [a for a in rcpts if not a.endswith("@finverified.ai")]
     missing = [a for a in common.env_list("CAROL_ALWAYS_CC") if a not in rcpts]
     if external and missing:
