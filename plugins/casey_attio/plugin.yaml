@@ -1,0 +1,4 @@
+name: casey_attio
+version: 1.0.0
+description: "Casey's CRM hands (Attio, FinVerified workspace): find a person or company, read their FinVerified fields (fv_*), update only fv_* fields, add a note, create/complete/list tasks. Uses ATTIO_API_KEY (the per-agent 'casey-attio' access token, FIN-264). No delete, no data-model changes, no other attributes."
+author: "FinVerified"
