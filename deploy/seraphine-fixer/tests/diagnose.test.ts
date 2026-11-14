@@ -60,6 +60,19 @@ describe("rulebook", () => {
   });
 });
 
+test("an alert about a MISSING canary is never filed as canary noise (Nov 13 false 'Nothing to fix')", async () => {
+  reset({ ...SLACK_ENV }); // no log credentials: she diagnoses from the alert name only, as on Nov 13
+  const text = await diagnoseAlert("FinVerified Production — Sev-1 Alerts › Production logs silent ~26h (log shipping broken, no LOG_CANARY)");
+  expect(text).not.toMatch(/Nothing to fix/);
+  expect(text).toMatch(/stopped receiving production logs/);
+  expect(modelCalls()).toHaveLength(0);
+});
+
+test("the canary log line itself is still noise", () => {
+  expect(matchRule("LOG_CANARY ok")?.rule.id).toBe("log-canary");
+  expect(matchRule("LOG_CANARY ok", "LOG_CANARY ok", { allowNoise: false })).toBeUndefined();
+});
+
 describe("cache", () => {
   test("a cached pattern makes 0 model calls", async () => {
     litellm(1);

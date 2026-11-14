@@ -134,6 +134,7 @@ Never-list (the fixer refuses before sending anything): code, databases, environ
 ## 16. The rulebook (known causes, matched by code, no AI)
 | Pattern | Likely cause | Fix | Who |
 |---|---|---|---|
+| "Logs silent" / no LOG_CANARY alert | Log shipping broke, or the alert watches a dead source | Check the alert's source; check the newest LOG_CANARY; then the API's Better Stack token | Rick |
 | S3 AccessDenied | The app's IAM role lacks an S3 permission | Add that permission to the app's IAM policy | Rick |
 | SSM ParameterNotFound / GetParameter failed | Missing or renamed parameter (named in the post) | Create it or fix its name | Rick |
 | DB connection refused / timeouts | Postgres down, overloaded, or pool exhausted | Restart the API, then check Postgres | Fixer, then Ashish |
