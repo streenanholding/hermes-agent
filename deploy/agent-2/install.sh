@@ -26,7 +26,16 @@ mkdir -p "$HOME_DIR"/{scripts,templates,quality,state,skills} \
 # Identity, contract, config. The contract is installed as AGENTS.md in the
 # working directory (terminal.cwd) so Hermes loads it into the system prompt.
 install -m 0644 "$SRC/SOUL.md"          "$HOME_DIR/SOUL.md"
-install -m 0644 "$SRC/CAPABILITIES.md"  "$HOME_DIR/AGENTS.md"
+# AGENTS.md = the capability contract followed by Carol's mandates, in order.
+{
+  cat "$SRC/CAPABILITIES.md"
+  for m in "$SRC"/mandates/*.md; do
+    printf '\n\n---\n\n'
+    cat "$m"
+  done
+} > "$HOME_DIR/AGENTS.md.tmp"
+chmod 0644 "$HOME_DIR/AGENTS.md.tmp"
+mv "$HOME_DIR/AGENTS.md.tmp" "$HOME_DIR/AGENTS.md"
 install -m 0644 "$SRC/config.yaml"      "$HOME_DIR/config.yaml"
 
 # Templates and quality rules (read-only for the agent: outside HERMES_WRITE_SAFE_ROOT).

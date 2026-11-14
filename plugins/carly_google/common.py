@@ -33,7 +33,7 @@ def state_dir() -> Path:
 
 def load_state(name: str, default: Any) -> Any:
     try:
-        return json.loads((state_dir() / name).read_text())
+        return json.loads((state_dir() / name).read_text(encoding="utf-8"))
     except Exception:
         return default
 
@@ -41,7 +41,7 @@ def load_state(name: str, default: Any) -> Any:
 def save_state(name: str, data: Any) -> None:
     p = state_dir() / name
     tmp = p.with_suffix(".tmp")
-    tmp.write_text(json.dumps(data, indent=2, sort_keys=True))
+    tmp.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
     os.chmod(tmp, 0o600)
     os.replace(tmp, p)
 

@@ -16,7 +16,7 @@ def main() -> int:
     state = c.budget_state()
     rows = {"vendors": [], "practices": []}
     for kind, path in c.iter_trackers():
-        text = path.read_text()
+        text = path.read_text(encoding="utf-8")
         rows[kind].append((
             path.stem,
             c.tracker_field(text, "Status") or "NO STATUS",
@@ -30,7 +30,7 @@ def main() -> int:
         index += [f"- [{s}]({kind}/{s}.md) | {st} | {o} | {n}" for s, st, o, n in items] or ["- none"]
         index.append("")
     c.TRACKERS.mkdir(parents=True, exist_ok=True)
-    (c.TRACKERS / "README.md").write_text("\n".join(index))
+    (c.TRACKERS / "README.md").write_text("\n".join(index), encoding="utf-8")
 
     c.log_spend("tracker_rollup", trackers=sum(len(v) for v in rows.values()), budget_state=state)
     if state != "ok" or not any(rows.values()):

@@ -70,20 +70,20 @@ def sections(body: str) -> dict[str, list[str]]:
 
 
 def required_headings(template: Path) -> list[str]:
-    _, body = parse(template.read_text())
+    _, body = parse(template.read_text(encoding="utf-8"))
     return [l[3:].strip() for l in body.splitlines() if l.startswith("## ")]
 
 
 def prohibited_patterns() -> list[re.Pattern]:
     try:
-        lines = PROHIBITED_FILE.read_text().splitlines()
+        lines = PROHIBITED_FILE.read_text(encoding="utf-8").splitlines()
     except OSError:
         return []
     return [re.compile(l, re.I) for l in lines if l.strip() and not l.lstrip().startswith("#")]
 
 
 def check(path: Path) -> list[str]:
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     meta, body = parse(text)
     problems: list[str] = []
 
@@ -162,7 +162,7 @@ def main() -> int:
             move(path, "failed")
         else:
             passed += 1
-            _, body = parse(path.read_text())
+            _, body = parse(path.read_text(encoding="utf-8"))
             out.append(f"*READY FOR RICK TO SEND* (`{path.name}`, passed the quality check)\n\n{body.strip()}")
             move(path, "posted")
     if passed or failed:

@@ -1,3 +1,24 @@
+# Carol Remly — Capability Contract (v2)
+
+> **v2, 3 Nov 2026 (Rick).** Agent 2 is now **Carol Remly, Director of PayVerified**
+> (carol@finverified.ai). v2 adds Carol's own mailbox and the Pay✓erified drive
+> (`carol_google` plugin) and her three mandates, which `install.sh` appends to this file:
+> `mandates/01-payverified-strategy.md`, `02-payer-connections.md`,
+> `03-competitive-landscape.md`. Where v1 text below says "no sending" or "Agent 2",
+> read it with these v2 changes:
+>
+> | v2 change | Enforced by |
+> |---|---|
+> | Carol may send email from carol@finverified.ai | `carol.allow_send: true` in `config.yaml` |
+> | **Every email to anyone outside finverified.ai is reviewed by Rick first.** Carol calls `request_review`; Rick gets the exact draft; it can be sent only after he replies SEND, and only if it is unchanged. Any edit needs a new review. | `carol_google/gmail.py` review gate (`carol.require_review`, on by default; tests in `tests/plugins/test_carol_review_gate.py`) |
+> | Outside mail only to approved domains, always copying Rick and Nancy, daily cap | `CAROL_SEND_DOMAINS`, `CAROL_ALWAYS_CC`, `carol.daily_send_cap` |
+> | Reviewers are finverified.ai addresses only | `CAROL_REVIEWERS` (default rick@finverified.ai) |
+> | Still never: portals, phone calls, fees or terms, PHI, bank data, credentials | Unchanged from v1 |
+>
+> Turning the review gate off is a PR that Rick merges, never a runtime or Slack change.
+
+---
+
 # Agent 2 — Capability Contract (v1, dark build)
 
 > Agent name: **not chosen yet** (Rick, 30 Sep 2026). Placeholder service name:
@@ -74,7 +95,7 @@ Each line is enforced by a credential or toolset it does not have, not by good i
 
 | Action | Who | How |
 |---|---|---|
-| Send anything to a vendor or payer | Rick | Draft posted to Slack after the check passes; Rick sends from his own account |
+| Send anything to a vendor or payer | Rick | v2: Carol's `request_review` emails Rick the exact draft; it sends only after he replies SEND |
 | Agree to a fee, term or requirement | Rick or Nancy | Never by Agent 2 |
 | Use Opus 5.5 | Rick | Agent asks with a one-line reason; Rick runs `/model agent2-claude-opus` in that thread |
 | Change what Agent 2 may do | Rick | PR to this file and `config.yaml`, plus a Railway env change |
@@ -178,6 +199,8 @@ for anything outside this file: post to Slack, say what happened, and stop. Retr
 most twice. Don't improvise a workaround.
 
 ## Version history
+
+- v2, 3 Nov 2026. Named Carol Remly, Director of PayVerified. Own mailbox and Pay✓erified drive; review-gated sending (Rick replies SEND to every outside email); mandates for PayVerified strategy, payer connections and competitive landscape. Author: Rick Hennessey with Claude.
 
 - v1, 30 Sep 2026. Dark build. Slack, web, files (scoped), memory, todo, skills,
   one Sonnet delegate. Script-only cron. No sending, no PHI, no bank data, no

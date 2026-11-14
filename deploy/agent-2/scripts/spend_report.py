@@ -26,7 +26,7 @@ TIER = {
 def load_rows(since: c.dt.datetime) -> list[dict]:
     rows = []
     try:
-        for line in c.SPEND_LOG.read_text().splitlines():
+        for line in c.SPEND_LOG.read_text(encoding="utf-8").splitlines():
             try:
                 row = json.loads(line)
                 if c.dt.datetime.fromisoformat(row["dt"]) >= since:
@@ -79,7 +79,7 @@ def main() -> int:
 
     opus = []
     try:
-        for line in c.OPUS_REASONS.read_text().splitlines():
+        for line in c.OPUS_REASONS.read_text(encoding="utf-8").splitlines():
             parts = [p.strip() for p in line.split("|")]
             if len(parts) >= 3 and parts[0][:10] >= str(since.date()):
                 opus.append(f"• {parts[0][:10]} {parts[1]}: {parts[2]}")

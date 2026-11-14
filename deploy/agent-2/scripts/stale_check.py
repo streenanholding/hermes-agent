@@ -21,7 +21,7 @@ def main() -> int:
     today = c.today()
     flagged, escalated, unreadable = [], [], []
     for kind, path in c.iter_trackers():
-        text = path.read_text()
+        text = path.read_text(encoding="utf-8")
         status = (c.tracker_field(text, "Status") or "").upper()
         if any(status.startswith(s) for s in CLOSED):
             continue

@@ -48,7 +48,7 @@ def tracker(home: Path, kind: str, slug: str, last: str, status: str = "IN MOTIO
 # ── budget guard ───────────────────────────────────────────────────────────
 
 def budget(home: Path) -> dict:
-    return json.loads((home / "state" / "budget.json").read_text())
+    return json.loads((home / "state" / "budget.json").read_text(encoding="utf-8"))
 
 
 def test_budget_ok_is_silent(home):
@@ -86,7 +86,7 @@ def test_budget_missing_env_fails_without_leaking(home):
 
 def test_spend_is_logged_without_secrets(home):
     run("budget_guard.py", home, AGENT2_BUDGET_SIMULATE_SPEND_PCT="10", AGENT2_LITELLM_KEY="sk-should-not-appear")
-    log = (home / "logs" / "spend.jsonl").read_text()
+    log = (home / "logs" / "spend.jsonl").read_text(encoding="utf-8")
     row = json.loads(log.splitlines()[-1])
     assert row["job"] == "budget_guard" and row["service"] == "hermes-agent-2"
     assert "sk-should-not-appear" not in log
@@ -125,7 +125,7 @@ def test_rollup_posts_when_ok_and_pauses_at_warn(home):
     assert "synthetic-stedi" in run("tracker_rollup.py", home).stdout
     (home / "state" / "budget.json").write_text(json.dumps({"state": "warn"}))
     assert run("tracker_rollup.py", home).stdout == ""
-    assert "synthetic-stedi" in (home / "trackers" / "README.md").read_text()
+    assert "synthetic-stedi" in (home / "trackers" / "README.md").read_text(encoding="utf-8")
 
 
 # ── draft check ────────────────────────────────────────────────────────────
@@ -191,7 +191,7 @@ def test_bad_draft_fails_and_is_not_posted(home, mutate, reason):
 
 def test_npi_and_tin_are_allowed_provider_facts(home):
     tracker(home, "practices", "test-family-dental", "2026-09-29")
-    text = (ROOT / "templates" / "drafts" / "enrollment-request.md").read_text()
+    text = (ROOT / "templates" / "drafts" / "enrollment-request.md").read_text(encoding="utf-8")
     for k, v in {
         "{{slug}}": "test-family-dental", "{{payer name}}": "Synthetic Payer",
         "{{clearinghouse enrollment API | payer portal (Rick submits) | paper form (practice signs)}}": "clearinghouse enrollment API",
