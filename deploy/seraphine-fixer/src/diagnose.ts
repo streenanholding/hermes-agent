@@ -35,8 +35,8 @@ function rank(groups: Group[], alertName: string): Group[] {
 
 export type Explained = { pattern: string; n: number; text: string; how: "rulebook" | "cache" | "ai" | "humans"; productBug: boolean; noise: boolean };
 
-export async function explain(pattern: string, raw: string, n: number): Promise<Explained> {
-  const m = matchRule(pattern, raw);
+export async function explain(pattern: string, raw: string, n: number, opts: { fromAlertName?: boolean } = {}): Promise<Explained> {
+  const m = matchRule(pattern, raw, { allowNoise: !opts.fromAlertName });
   if (m) {
     noteRulebookHit();
     return { pattern, n, text: ruleText(m), how: "rulebook", productBug: !m.rule.infra, noise: Boolean(m.rule.noise) };
@@ -68,12 +68,13 @@ export async function diagnoseAlert(alertName: string, pagesNote = ""): Promise<
       note = `I couldn't read the logs (${errText(e)}).`;
     }
   }
-  if (!groups.length) groups = [{ pattern: patternOf(alertName), raw: alertName, n: 1 }];
+  const fromAlertName = !groups.length;
+  if (fromAlertName) groups = [{ pattern: patternOf(alertName), raw: alertName, n: 1 }];
 
   const parts: string[] = [];
   const bugs: string[] = [];
   for (const g of groups) {
-    const x = await explain(g.pattern, g.raw, g.n);
+    const x = await explain(g.pattern, g.raw, g.n, { fromAlertName });
     parts.push(`• "${x.pattern}" ×${x.n} _(${tag[x.how]})_\n${x.text.split("\n").map((l) => `   ${l}`).join("\n")}`);
     if (x.productBug) {
       bugs.push(await upsertBug(`[Seraphine] ${x.pattern.slice(0, 90)}`, `Alert: ${patternOf(alertName)}\nPattern: ${x.pattern}\nCount (30 min): ${x.n}\n\n${x.text}`));
