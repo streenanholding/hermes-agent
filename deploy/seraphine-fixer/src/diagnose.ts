@@ -41,6 +41,11 @@ export async function explain(pattern: string, raw: string, n: number, opts: { f
     noteRulebookHit();
     return { pattern, n, text: ruleText(m), how: "rulebook", productBug: !m.rule.infra, noise: Boolean(m.rule.noise) };
   }
+  // Only the alert's name and no log lines: a model can't add anything real
+  // (it answered "check the logs" on Nov 16). Say so and spend nothing.
+  if (opts.fromAlertName) {
+    return { pattern, n, text: "Not in my rulebook, and I have no log lines to diagnose from, so I won't guess (no AI spent). Humans: open the alert in Better Stack.", how: "humans", productBug: false, noise: false };
+  }
   const ai = await aiDiagnose(pattern, n);
   if ("blocked" in ai) {
     return { pattern, n, text: `Not in my rulebook. ${ai.blocked} Humans: look at this pattern in Better Stack.`, how: "humans", productBug: false, noise: false };

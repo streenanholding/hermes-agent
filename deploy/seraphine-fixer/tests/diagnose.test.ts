@@ -68,6 +68,14 @@ test("an alert about a MISSING canary is never filed as canary noise (Nov 13 fal
   expect(modelCalls()).toHaveLength(0);
 });
 
+test("with no log lines to read, an unknown alert name makes 0 model calls", async () => {
+  reset({ ...SLACK_ENV, SERAPHINE_LITELLM_KEY: "sk-seraphine-virtual" }); // AI on, log reading off (as on Nov 16)
+  litellm(1);
+  const text = await diagnoseAlert("FinVerified Production — Sev-1 Alerts › Production error-level logs (any error, diagnosed by Seraphine)");
+  expect(modelCalls()).toHaveLength(0);
+  expect(text).toMatch(/won't guess \(no AI spent\)/);
+});
+
 test("the canary log line itself is still noise", () => {
   expect(matchRule("LOG_CANARY ok")?.rule.id).toBe("log-canary");
   expect(matchRule("LOG_CANARY ok", "LOG_CANARY ok", { allowNoise: false })).toBeUndefined();
