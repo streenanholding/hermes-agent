@@ -18,6 +18,16 @@ export type Rule = {
 
 export const RULEBOOK: Rule[] = [
   {
+    // Must come before the canary noise row: "no LOG_CANARY" means the canary is MISSING.
+    id: "logs-silent",
+    test: /logs? (are |went )?silent|no LOG_CANARY|log shipping (is )?broken|no logs for/i,
+    what: "Better Stack stopped receiving production logs.",
+    cause: "Either log shipping broke (app's Better Stack token or source changed) or the alert is watching a dead source. On Nov 13 it was the dead finverified_app_production source (FIN-1500).",
+    fix: "Check the alert watches only the live source; then check the newest LOG_CANARY line in finverified_app_oct27. No canary in 26 h = shipping is broken: check the API's Better Stack token in Railway.",
+    who: "Rick (Better Stack alert or token). Seraphine never touches variables.",
+    infra: true,
+  },
+  {
     id: "log-canary",
     test: /LOG_CANARY/,
     what: "Log canary line.",
@@ -107,9 +117,12 @@ export type Match = { rule: Rule; detail: string };
 
 // Matching is plain code inside the fixer, so it may look at the raw line too
 // (ports, permission names); the raw line itself never leaves the fixer.
-export function matchRule(pattern: string, raw = pattern): Match | undefined {
+// `allowNoise: false` when matching an alert's NAME rather than a log line:
+// an alert that mentions a noise line (e.g. "no LOG_CANARY") is never noise.
+export function matchRule(pattern: string, raw = pattern, opts: { allowNoise?: boolean } = {}): Match | undefined {
   const hit = (re: RegExp) => re.test(pattern) || re.test(raw);
   for (const rule of RULEBOOK) {
+    if (rule.noise && opts.allowNoise === false) continue;
     if (!hit(rule.test)) continue;
     if (rule.also && !hit(rule.also)) continue;
     return { rule, detail: rule.detail ? rule.detail(raw) : "" };
