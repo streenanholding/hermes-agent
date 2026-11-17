@@ -35,11 +35,16 @@ function rank(groups: Group[], alertName: string): Group[] {
 
 export type Explained = { pattern: string; n: number; text: string; how: "rulebook" | "cache" | "ai" | "humans"; productBug: boolean; noise: boolean };
 
-export async function explain(pattern: string, raw: string, n: number): Promise<Explained> {
-  const m = matchRule(pattern, raw);
+export async function explain(pattern: string, raw: string, n: number, opts: { fromAlertName?: boolean } = {}): Promise<Explained> {
+  const m = matchRule(pattern, raw, { allowNoise: !opts.fromAlertName });
   if (m) {
     noteRulebookHit();
     return { pattern, n, text: ruleText(m), how: "rulebook", productBug: !m.rule.infra, noise: Boolean(m.rule.noise) };
+  }
+  // Only the alert's name and no log lines: a model can't add anything real
+  // (it answered "check the logs" on Nov 16). Say so and spend nothing.
+  if (opts.fromAlertName) {
+    return { pattern, n, text: "Not in my rulebook, and I have no log lines to diagnose from, so I won't guess (no AI spent). Humans: open the alert in Better Stack.", how: "humans", productBug: false, noise: false };
   }
   const ai = await aiDiagnose(pattern, n);
   if ("blocked" in ai) {
@@ -68,12 +73,13 @@ export async function diagnoseAlert(alertName: string, pagesNote = ""): Promise<
       note = `I couldn't read the logs (${errText(e)}).`;
     }
   }
-  if (!groups.length) groups = [{ pattern: patternOf(alertName), raw: alertName, n: 1 }];
+  const fromAlertName = !groups.length;
+  if (fromAlertName) groups = [{ pattern: patternOf(alertName), raw: alertName, n: 1 }];
 
   const parts: string[] = [];
   const bugs: string[] = [];
   for (const g of groups) {
-    const x = await explain(g.pattern, g.raw, g.n);
+    const x = await explain(g.pattern, g.raw, g.n, { fromAlertName });
     parts.push(`• "${x.pattern}" ×${x.n} _(${tag[x.how]})_\n${x.text.split("\n").map((l) => `   ${l}`).join("\n")}`);
     if (x.productBug) {
       bugs.push(await upsertBug(`[Seraphine] ${x.pattern.slice(0, 90)}`, `Alert: ${patternOf(alertName)}\nPattern: ${x.pattern}\nCount (30 min): ${x.n}\n\n${x.text}`));
