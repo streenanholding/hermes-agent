@@ -5917,6 +5917,19 @@ def run_conversation(
                         _retry.primary_recovery_attempted = False
                         _retry.restart_with_rebuilt_messages = True
                         break
+                    # Dead key / exhausted budget with no fallback left: trip the
+                    # process-wide auth gate (one alert, requests held, replay on
+                    # recovery) so every following message doesn't re-hit the
+                    # same 401/403 — see gateway/auth_gate.py.
+                    try:
+                        from gateway.auth_gate import (
+                            get_gate as _get_auth_gate,
+                            is_auth_or_budget_failure as _is_auth_budget,
+                        )
+                        if classified.is_auth or _is_auth_budget(status_code, str(api_error)):
+                            _get_auth_gate().trip(agent._summarize_api_error(api_error))
+                    except Exception:
+                        logger.debug("auth gate trip failed", exc_info=True)
                     if api_kwargs is not None:
                         agent._dump_api_request_debug(
                             api_kwargs, reason="non_retryable_client_error", error=api_error,

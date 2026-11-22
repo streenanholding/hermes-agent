@@ -2229,6 +2229,10 @@ def resume_job(job_id: str) -> Optional[Dict[str, Any]]:
             "state": "scheduled",
             "paused_at": None,
             "paused_reason": None,
+            "paused_by": None,
+            # Fresh count after a circuit-breaker pause, otherwise the very
+            # next failure would re-trip it immediately.
+            "failure_streak": 0,
             "next_run_at": next_run_at,
         },
     )

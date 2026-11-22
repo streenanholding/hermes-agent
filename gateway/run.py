@@ -18546,8 +18546,33 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
                 pass
         return source
 
+    def _hold_for_auth_gate(self, event) -> bool:
+        """Queue ``event`` if the LLM auth gate is blocked. True = held."""
+        try:
+            from gateway.auth_gate import get_gate
+
+            gate = get_gate()
+            if not gate.blocked:
+                return False
+            return gate.hold(event)
+        except Exception:
+            logger.debug("auth gate hold failed", exc_info=True)
+            return False
+
+    async def _replay_held_event(self, event) -> None:
+        """Re-dispatch a held request through its original adapter."""
+        adapter = self.adapters.get(event.source.platform)
+        if adapter is None:
+            logger.warning("held request dropped: no adapter for %s", event.source.platform)
+            return
+        await adapter.handle_message(event)
+
     async def _handle_message_with_agent(self, event, source, _quick_key: str, run_generation: int):
         """Inner handler that runs under the _running_agents sentinel guard."""
+        # LLM key blocked (401/403/budget/expiry): hold instead of re-hitting
+        # the dead key; replayed by the health loop on recovery.
+        if self._hold_for_auth_gate(event):
+            return None
         _msg_start_time = time.time()
         _platform_name = source.platform.value if hasattr(source.platform, "value") else str(source.platform)
         _msg_preview = (event.text or "")[:80].replace("\n", " ")
@@ -20208,6 +20233,11 @@ class GatewayRunner(GatewayAuthorizationMixin, GatewayKanbanWatchersMixin, Gatew
             # the user message causes severe context loss on retry — the agent
             # forgets what was just asked.  Persist the user turn so the
             # conversation is preserved. (#7100)
+            if agent_result.get("failed") and self._hold_for_auth_gate(event):
+                # This turn's own 401/403/budget failure tripped the gate: its
+                # error text is suppressed (the gate posted the one alert) and
+                # the request replays once the key is healthy again.
+                return None
             agent_failed_early = bool(agent_result.get("failed"))
             hidden_reasoning_incomplete = _is_gateway_hidden_reasoning_incomplete_turn(
                 agent_result
@@ -30488,6 +30518,14 @@ async def start_gateway(config: Optional[GatewayConfig] = None, replace: bool = 
     )
     housekeeping_thread.start()
 
+    # LLM health loop: 5-min LiteLLM probe, held-request replay, and the
+    # Better Stack heartbeat (only pings while the last probe succeeded).
+    from gateway.health_loop import run_health_loop
+
+    health_task = asyncio.create_task(
+        run_health_loop(runner._replay_held_event), name="llm-health-loop"
+    )
+
     # READY is emitted only after adapters, cron, and housekeeping have all
     # reached their running boundary. Missing config/systemd runtime state
     # leaves the watchdog disabled without changing gateway behavior.
@@ -30520,6 +30558,7 @@ async def start_gateway(config: Optional[GatewayConfig] = None, replace: bool = 
     # silently dropped (#58818). Awaiting keeps the loop alive so the in-flight
     # delivery finishes before we tear down.
     cron_stop.set()
+    health_task.cancel()
     _stop_cron_provider(cron_provider)
     if not await _await_thread_exit(cron_thread, timeout=_CRON_SHUTDOWN_DRAIN_TIMEOUT):
         logger.warning(
